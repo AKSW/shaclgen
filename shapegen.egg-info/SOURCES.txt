@@ -1,9 +1,0 @@
-setup.py
-shapegen/__init__.py
-shapegen/__main__.py
-shapegen/template.py
-shapegen.egg-info/PKG-INFO
-shapegen.egg-info/SOURCES.txt
-shapegen.egg-info/dependency_links.txt
-shapegen.egg-info/entry_points.txt
-shapegen.egg-info/top_level.txt
