@@ -94,13 +94,8 @@ def generate_graph(triples,args):
     shapes = shapes.decode("utf-8") 
     return shapes
 
-def main():
-    arg = sys.argv[1:][0]
-    turtle = fetch_uri(arg)
-    args, classes, props = gen_prefixes(arg, turtle)
-    triples = generate_triples(classes, props)
-    graph = generate_graph(triples, args)
-    print( graph)
-
-if __name__ == '__main__':
-    main()
+def catch_non_ttl(uri):
+    if str(uri[-3:]) != 'ttl':
+        raise NameError('unsupported file format. Only ttl files accepted at this time')
+    else:
+        pass
