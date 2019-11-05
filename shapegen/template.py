@@ -4,10 +4,8 @@
 ## 
 #%%
 from rdflib import Graph, Namespace, XSD, RDF, URIRef
-from typing import Optional
 import requests
 import rdflib
-import sys
 
 
 def fetch_uri(uri: str):

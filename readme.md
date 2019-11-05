@@ -1,6 +1,6 @@
 # shapegen
 
-this command line tool will generate a basic shape graph based on the classes and properties present in a data graph
+shapegen is a command line tool will generate a basic shacl graph based on the classes and properties present in a data graph
 
 
 
