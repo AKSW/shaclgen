@@ -2,11 +2,15 @@
 #%%
 from setuptools import setup
 setup(
-    name = 'shapegen',
+    name = 'shaclgen',
     version = '0.1.0',
-    packages = ['shapegen'],
+    packages = ['shaclgen'],
+    description='Shacl graph generator',
+    author='Alexis Keely',
+    author_email='alexiskm@uw.com',
+    license='MIT',
     entry_points = {
         'console_scripts': [
-            'shapegen = shapegen.__main__:main'
+            'shaclgen = shaclgen.__main__:main'
         ]
     })
