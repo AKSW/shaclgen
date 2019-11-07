@@ -13,7 +13,10 @@ Supported serializations include:
 - `xml` for rdf/xml
 - `nt` for ntriples
 
-
+example:
+```
+$shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/aggregation-1-0-0.ttl ttl
+```
 This project is still in development. Comments, questions, and issues are welcome!
 
 Contact alexiskm at uw dot edu.
