@@ -1,0 +1,2 @@
+include *.txt *.md
+include shaclgen/*.py
