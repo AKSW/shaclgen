@@ -9,8 +9,8 @@ with open('requirements.txt') as reqs:
     requirements = reqs.read()
 
 setup(
-    name = 'shaclgen_test',
-    version = '0.1.1',
+    name = 'shaclgen',
+    version = '0.1.2',
     packages = ['shaclgen'],
     description='Shacl graph generator',
     long_description=l_description,
@@ -18,11 +18,11 @@ setup(
     url='https://github.com/alexiskeely/shaclgen',
     author_email='alexiskm@uw.com',
     install_requires=requirements,
-
     keywords=['Linked Data', 'Semantic Web', 'Python',
               'SHACL', 'Shapes', 'Schema', 'Validate'],
-    license='LICENSE.txt',
+    license='MIT',
     classifiers=[
+                'Development Status :: 4 - Beta',
                 'Programming Language :: Python :: 3',
 
     ],

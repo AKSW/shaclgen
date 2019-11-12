@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 
 from rdflib import Graph, Namespace, XSD, RDF, URIRef
-import requests
 import rdflib
-import sys
-from collections import Counter, defaultdict
-
-
+from collections import Counter
 
 
 def generate_groups(input_URI, serialization):
@@ -32,37 +28,92 @@ def generate_groups(input_URI, serialization):
     return output
             
 #generate the triples  
-def generate_triples(output):
+def generate_triples(output, graph_format):
     triples = ''
     counter = 0
-    for statement in output:
-        counter = counter + 1
-        if '#' in statement[0]:
-            name =  statement[0].split("#")[-1]
-        else:
-            name =  statement[0].split("/")[-1]
-        #gen node shape
-        node_triples = (f"""
-    <http://example.org/{name}Shape> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/shacl#NodeShape> .
-    <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#targetClass> <{statement[0]}> .""")
-        if statement[2] == 'unique':
+    if graph_format == 'nf':
+        for statement in output:
+            counter = counter + 1
+            if '#' in statement[0]:
+                name =  statement[0].split("#")[-1]
+            else:
+                name =  statement[0].split("/")[-1]
+            #gen node shape
+            node_triples = (f"""
+        <http://example.org/{name}Shape> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/shacl#NodeShape> .
+        <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#targetClass> <{statement[0]}> .""")
+            if statement[2] == 'unique':
+                if '#' in statement[1]:
+                    prop_name = statement[1].split("#")[-1]
+                else:
+                    prop_name = statement[1].split("/")[-1]
+                prop_triples = (f"""
+        <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#property> _:{counter} .
+        _:{counter} <http://www.w3.org/ns/shacl#path> <{statement[1]}> . 
+        _:{counter} <http://www.w3.org/ns/shacl#name> "{prop_name}" . """)
+            else:
+                if '#' in statement[1]:
+                    prop_name = statement[1].split("#")[-1]
+                else:
+                    prop_name = statement[1].split("/")[-1]
+                prop_triples = (f"""
+        <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#property> <http://example.org/{prop_name}Shape> .
+        <http://example.org/{prop_name}Shape> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/shacl#PropertyShape> .
+        <http://example.org/{prop_name}Shape> <http://www.w3.org/ns/shacl#path> <{statement[1]}> .""")  
+            triples = triples + node_triples + prop_triples
+    elif graph_format =='ef':
+        for statement in output:
+            counter = counter + 1
+            if '#' in statement[0]:
+                name =  statement[0].split("#")[-1]
+            else:
+                name =  statement[0].split("/")[-1]
+            #gen node shape
+            node_triples = (f"""
+        <http://example.org/{name}Shape> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/shacl#NodeShape> .
+        <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#targetClass> <{statement[0]}> .""")
+            if statement[2] == 'unique':
+                if '#' in statement[1]:
+                    prop_name = statement[1].split("#")[-1]
+                else:
+                    prop_name = statement[1].split("/")[-1]
+                prop_triples = (f"""
+        <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#property> _:{counter} .
+        _:{counter} <http://www.w3.org/ns/shacl#path> <{statement[1]}> . 
+        _:{counter} <http://www.w3.org/ns/shacl#name> "{prop_name}" . 
+        <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#property> <http://example.org/{prop_name}Shape> .
+        <http://example.org/{prop_name}Shape> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/shacl#PropertyShape> .
+        <http://example.org/{prop_name}Shape> <http://www.w3.org/ns/shacl#path> <{statement[1]}> .""")  
+            else:
+                if '#' in statement[1]:
+                    prop_name = statement[1].split("#")[-1]
+                else:
+                    prop_name = statement[1].split("/")[-1]
+                prop_triples = (f"""
+        <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#property> <http://example.org/{prop_name}Shape> .
+        <http://example.org/{prop_name}Shape> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/shacl#PropertyShape> .
+        <http://example.org/{prop_name}Shape> <http://www.w3.org/ns/shacl#path> <{statement[1]}> .""")  
+            triples = triples + node_triples + prop_triples
+    else:
+        for statement in output:
+            counter = counter + 1
+            if '#' in statement[0]:
+                name =  statement[0].split("#")[-1]
+            else:
+                name =  statement[0].split("/")[-1]
+            #gen node shape
+            node_triples = (f"""
+        <http://example.org/{name}Shape> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/shacl#NodeShape> .
+        <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#targetClass> <{statement[0]}> .""")
             if '#' in statement[1]:
                 prop_name = statement[1].split("#")[-1]
             else:
                 prop_name = statement[1].split("/")[-1]
             prop_triples = (f"""
-    <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#property> _:{counter} .
-    _:{counter} <http://www.w3.org/ns/shacl#path> <{statement[1]}> . """)
-        else:
-            if '#' in statement[1]:
-                prop_name = statement[1].split("#")[-1]
-            else:
-                prop_name = statement[1].split("/")[-1]
-            prop_triples = (f"""
-    <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#property> <http://example.org/{prop_name}Shape> .
-    <http://example.org/{prop_name}Shape> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/shacl#PropertyShape> .
-    <http://example.org/{prop_name}Shape> <http://www.w3.org/ns/shacl#path> <{statement[1]}> .""")  
-        triples = triples + node_triples + prop_triples
+        <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#property> <http://example.org/{prop_name}Shape> .
+        <http://example.org/{prop_name}Shape> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/shacl#PropertyShape> .
+        <http://example.org/{prop_name}Shape> <http://www.w3.org/ns/shacl#path> <{statement[1]}> .""")  
+            triples = triples + node_triples + prop_triples    
     return triples
     
     
