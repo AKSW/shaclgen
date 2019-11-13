@@ -31,7 +31,6 @@ def main():
         triples = generate_triples(output, 'sf')
 
     graph = generate_shacl(triples)
-    print('test environment')
     print(graph)
 
 if __name__ == '__main__':

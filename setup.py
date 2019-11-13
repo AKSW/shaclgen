@@ -3,14 +3,14 @@
 from setuptools import setup
 
 
-with open('README.md') as readme:
+with open('README.rst') as readme:
     l_description = readme.read()
 with open('requirements.txt') as reqs:
     requirements = reqs.read()
 
 setup(
     name = 'shaclgen',
-    version = '0.1.2',
+    version = '0.1.3',
     packages = ['shaclgen'],
     description='Shacl graph generator',
     long_description=l_description,

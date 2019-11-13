@@ -21,7 +21,8 @@ def generate_groups(input_URI, serialization):
                 tupes.append((k,p1))
     tupes = list(set(tupes))
     
-    
+    tupes = [x for x in tupes if x[1] != rdflib.term.URIRef('http://www.w3.org/1999/02/22-rdf-syntax-ns#type')]
+
     c = Counter(x[1] for x in tupes)
     output = [x + ('unique',) if c[x[1]] == 1 else x + ('repeat',) for x in tupes]
     
@@ -81,7 +82,7 @@ def generate_triples(output, graph_format):
         <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#property> _:{counter} .
         _:{counter} <http://www.w3.org/ns/shacl#path> <{statement[1]}> . 
         _:{counter} <http://www.w3.org/ns/shacl#name> "{prop_name}" . 
-        <http://example.org/{name}Shape> <http://www.w3.org/ns/shacl#property> <http://example.org/{prop_name}Shape> .
+        
         <http://example.org/{prop_name}Shape> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/shacl#PropertyShape> .
         <http://example.org/{prop_name}Shape> <http://www.w3.org/ns/shacl#path> <{statement[1]}> .""")  
             else:
