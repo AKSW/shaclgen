@@ -5,9 +5,40 @@ import rdflib
 from collections import Counter
 
 
-def generate_groups(input_URI, serialization):
+def generate_merged(input_URIS, serialization):
     g = rdflib.Graph()
-    g.load(input_URI, format=serialization)
+    for x in input_URIS:
+        g.parse(x, format=serialization)
+    
+    class_list = []
+    for s,p,o in g.triples( (None,  RDF.type, None) ):
+       class_list.append(o)
+    class_list = sorted(list(set(class_list)))
+    
+    tupes = []
+    for k in class_list:
+        for s,p,o in g.triples((None, RDF.type, k)):
+            for s,p1,o1 in g.triples((s, None, None)):
+                tupes.append((k,p1))
+    tupes = list(set(tupes))
+    
+    tupes = [x for x in tupes if x[1] != rdflib.term.URIRef('http://www.w3.org/1999/02/22-rdf-syntax-ns#type')]
+
+    c = Counter(x[1] for x in tupes)
+    output = [x + ('unique',) if c[x[1]] == 1 else x + ('repeat',) for x in tupes]
+    
+    return output
+
+
+
+def generate_groups(input_URI, serialization):
+    if len(input_URI) > 1:
+        g = rdflib.Graph()
+        for x in input_URI:
+            g.parse(x, format=serialization)
+    else:
+        g = rdflib.Graph()
+        g.load(input_URI[0], format=serialization)
     
     class_list = []
     for s,p,o in g.triples( (None,  RDF.type, None) ):
@@ -117,6 +148,7 @@ def generate_triples(output, graph_format):
             triples = triples + node_triples + prop_triples    
     return triples
     
+
     
     
     
