@@ -168,19 +168,19 @@ class schema():
                             ng.add((blank, SH.datatype, rang))
                         else:
                             ng.add((blank, SH['class'], rang ))
-                    for r in self.REST.keys():
-                        if self.REST[r]['onProp'] == p and self.REST[r]['onClass'] == self.PROPS[p]['domain']:
-                            if self.REST[r]['type'] in (OWL.cardinality):
-                                ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
-                                ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
-                            elif self.REST[r]['type'] in (OWL.minCardinality):
-                                ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
-                            elif self.REST[r]['type'] in (OWL.maxCardinality):
-                                ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
-                            else:
-                                pass
-                        else:
-                            pass
+#                    for r in self.REST.keys():
+#                        if self.REST[r]['onProp'] == p and self.REST[r]['onClass'] == self.PROPS[p]['domain']:
+#                            if self.REST[r]['type'] in (OWL.cardinality):
+#                                ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+#                                ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+#                            elif self.REST[r]['type'] in (OWL.minCardinality):
+#                                ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+#                            elif self.REST[r]['type'] in (OWL.maxCardinality):
+#                                ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+#                            else:
+#                                pass
+#                        else:
+#                            pass
                 else:
                     label = self.PROPS[p]['label']
                     ng.add((EX[label], RDF.type, SH.NodeShape))
