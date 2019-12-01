@@ -7,9 +7,10 @@ from rdflib.term import URIRef, Literal, BNode
 import collections
 
 class schema():
-    def __init__(self, graph=None,):
+    def __init__(self, args:list):
         self.G = Graph()
-        self.G.load(graph,format=guess_format(graph))
+        for graph in args:
+            self.G.parse(graph,format=guess_format(graph))
         self.CLASSES = collections.OrderedDict()
         self.PROPS = collections.OrderedDict()    
         self.REST = collections.OrderedDict()    
@@ -39,7 +40,9 @@ class schema():
        
         
         #gather property values
+        count = 0
         for prop in self.PROPS.keys():
+            count = count +1
             s = URIRef(prop)           
             self.PROPS[prop]['domain']= None
             self.PROPS[prop]['range']= None
@@ -57,7 +60,7 @@ class schema():
                 self.PROPS[prop]['e_prop'] = o
             
             for o in self.G.objects(subject=s, predicate=RDFS.label):
-                self.PROPS[prop]['label'] = o
+                self.PROPS[prop]['label'] = self.gen_shape_labels(prop)+str(count)
             
     
     
@@ -75,11 +78,12 @@ class schema():
                 classes.append(s)
             else:
                 pass
-            
+        count = 0    
         for c in sorted(classes):
             self.CLASSES[c] = {}
-            for c in self.CLASSES.keys():
-                self.CLASSES[c]['label'] = self.gen_shape_labels(c)
+        for c in self.CLASSES.keys():
+            count = count +1
+            self.CLASSES[c]['label'] = self.gen_shape_labels(c)+str(count)
             
     def extract_restrictions(self):
         # does not handle nested restrictions within other class descriptions
@@ -132,29 +136,30 @@ class schema():
             label = URI.split("#")[-1]
         else:
             label = URI.split("/")[-1]
-        return label
+        return label+'_'
             
-    def gen_graph(self):
+    def gen_graph(self, serial='turtle'):
+
         self.extract_props()
         self.extract_classes()
         self.extract_restrictions()
         ng = Graph()
         SH = Namespace('http://www.w3.org/ns/shacl#')
-        ng.bind('SH', SH) 
+        ng.bind('sh', SH) 
         
         EX = Namespace('http://www.example.org/')
-        ng.bind('EX', EX)
+        ng.bind('ex', EX)
         
         # add class Node Shapes
         for c in self.CLASSES.keys():
-            label = self.gen_shape_labels(c)+'_ClassShape'
+            label = self.CLASSES[c]['label']
             ng.add((EX[label], RDF.type, SH.NodeShape))
             ng.add((EX[label], SH.targetClass, c))
         for p in self.PROPS.keys():
             if self.PROPS[p]['domain'] is not None:
                 blank = BNode()
                 if self.PROPS[p]['domain'] in self.CLASSES.keys():
-                    label = self.gen_shape_labels(self.PROPS[p]['domain'])+'_ClassShape'
+                    label = self.CLASSES[self.PROPS[p]['domain']]['label']
                     ng.add((EX[label], SH.property, blank))
                     ng.add((blank, SH.path, p))
                     if self.PROPS[p]['range'] is not None:
@@ -177,7 +182,7 @@ class schema():
                         else:
                             pass
                 else:
-                    label = self.gen_shape_labels(self.PROPS[p])+'_PropShape'
+                    label = self.PROPS[p]['label']
                     ng.add((EX[label], RDF.type, SH.NodeShape))
                     ng.add((EX[label], SH.targetSubjectsOf, p))
                     ng.add((EX[label], SH.nodeKind, SH.BlankNodeOrIRI))
@@ -191,7 +196,7 @@ class schema():
                                 ng.add((blank, SH['class'], rang ))
             else:
                 blank = BNode()
-                label = self.gen_shape_labels(p)+'_PropShape'
+                label = self.PROPS[p]['label']
                 ng.add((EX[label], RDF.type, SH.NodeShape))
                 ng.add((EX[label], SH.targetSubjectsOf, p))
                 ng.add((EX[label], SH.nodeKind, SH.BlankNodeOrIRI))
@@ -204,11 +209,8 @@ class schema():
                         else:
                             ng.add((blank, SH['class'], rang ))
         
-        print(ng.serialize(format='turtle').decode())        
-        return ng        
+        print(ng.serialize(format=serial).decode())        
 
 
 
-    def save_graph(self, path):
-        ng = self.gen_graph()
-        ng.serialize(path, format='turtle')    
+     

@@ -10,7 +10,7 @@ with open('requirements.txt') as reqs:
 
 setup(
     name = 'shaclgen',
-    version = '0.1.3',
+    version = '0.1.4',
     packages = ['shaclgen'],
     description='Shacl graph generator',
     long_description=l_description,
