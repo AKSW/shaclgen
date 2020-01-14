@@ -42,25 +42,24 @@ class schema():
         #gather property values
         count = 0
         for prop in self.PROPS.keys():
-            count = count +1
+            count = count + 1
             s = URIRef(prop)           
             self.PROPS[prop]['domain']= None
             self.PROPS[prop]['range']= None
             self.PROPS[prop]['e_prop'] = None
+            self.PROPS[prop]['label'] = self.gen_shape_labels(prop)+str(count)
 
-            for o in self.G.objects(subject=s, predicate=RDFS.domain):
-                if type(o) != BNode:
-                    self.PROPS[prop]['domain'] = o
+            for domain in self.G.objects(subject=s, predicate=RDFS.domain):
+                if type(domain) != BNode:
+                    self.PROPS[prop]['domain'] = domain
                
-            for o in self.G.objects(subject=s, predicate=RDFS.range):
-                if type(o) != BNode:
-                    self.PROPS[prop]['range'] = o
+            for ranges in self.G.objects(subject=s, predicate=RDFS.range):
+                if type(ranges) != BNode:
+                    self.PROPS[prop]['range'] = ranges
 
-            for o in self.G.objects(subject=s, predicate=OWL.equivalentProperty):
-                self.PROPS[prop]['e_prop'] = o
+            for equal in self.G.objects(subject=s, predicate=OWL.equivalentProperty):
+                self.PROPS[prop]['e_prop'] = equal
             
-            for o in self.G.objects(subject=s, predicate=RDFS.label):
-                self.PROPS[prop]['label'] = self.gen_shape_labels(prop)+str(count)
             
     
     
@@ -74,16 +73,19 @@ class schema():
                 pass
         for s,p,o in self.G.triples((None,RDF.type,RDFS.Class)):
             if type(s) != BNode:
-
                 classes.append(s)
             else:
                 pass
+            
         count = 0    
         for c in sorted(classes):
             self.CLASSES[c] = {}
         for c in self.CLASSES.keys():
             count = count +1
             self.CLASSES[c]['label'] = self.gen_shape_labels(c)+str(count)
+            
+            
+            
             
     def extract_restrictions(self):
         # does not handle nested restrictions within other class descriptions
@@ -155,6 +157,7 @@ class schema():
             label = self.CLASSES[c]['label']
             ng.add((EX[label], RDF.type, SH.NodeShape))
             ng.add((EX[label], SH.targetClass, c))
+            ng.add((EX[label], SH.nodeKind, SH.BlankNodeOrIRI))
         for p in self.PROPS.keys():
             if self.PROPS[p]['domain'] is not None:
                 blank = BNode()
