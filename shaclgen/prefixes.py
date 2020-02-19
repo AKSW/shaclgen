@@ -6,60 +6,190 @@ Created on Fri Nov  1 09:12:38 2019
 
 @author: alexis
 """
-#!/usr/bin/env python
-prefixes = """
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
-@prefix bflc: <http://id.loc.gov/ontologies/bflc/> .
-@prefix bf1: <http://bibframe.org/vocab/> .
-@prefix dc: <http://purl.org/dc/elements/1.1/> .
-@prefix dct: <http://purl.org/dc/terms/> .
-@prefix dpla: <http://dp.la/about/map/> .
-@prefix ex: <http://example.org/> .
-@prefix edm: <http://www.europeana.eu/schemas/edm/> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
-@prefix http: <http://www.w3.org/2011/http#> .
-@prefix ldproc: <https://doi.org/10.6069/uwlib.55.b.2#> .
-@prefix library: <http://purl.org/library/> .
-@prefix madsrdf: <http://www.loc.gov/mads/rdf/v1#> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix plat: <https://doi.org/10.6069/uwlib.55.d.2#> .
-@prefix rel: <http://id.loc.gov/vocabulary/relators/> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@prefix uwext: <http://faculty.washington.edu/tgis/ld/brumfield/uwDataset/extensions#> .
-@prefix uwprop: <https://doi.org/10.6069/uwlib.55.d.3#> .
-@prefix void: <http://rdfs.org/ns/void#> .
-@prefix vra: <http://purl.org/vra/> .
-@prefix wgs84: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
-@prefix dash: <http://datashapes.org/dash#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix schema: <http://schema.org/> .
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . """
+#import json
+#count = 0
+#def generate_bindings(prefixes):
+#    arg_dict = {}
+#    with open('namespaces.json','r', encoding='utf-8') as fin:
+#        names = json.load(fin)
+#    for x,v in names.items():
+#        arg_dict['var'+str(count)] = x[1]
+#        count = count + 1
+#    EX = Namespace('http://www.example.org/')
+#        ng.bind('ex', EX)
+#    return namespace_d
+#        #%%
+#        
+#
+#For x in names.items():    
+#    
+##%%
+#    
+#    
+#with open('namespaces.json','r', encoding='utf-8') as fin:
+#    names = json.load(fin) 
+#    
+#    
+#    
+#from rdflib import Graph
+#
+#G = Graph()
+#G.parse('https://trellis.sinopia.io/repository/washington/83337200-3e1f-4a11-8177-de83111d67bc',format='ttl')
+#
+#subs = []
+#for s,p,o in G.triples((None,None,None)):
+#    s = s.split('#')
+#    subs.append(p)
+#for uri in names.values():
+#   if uri in subs:
+#       print(uri)
+#
+#from urllib.parse import urlparse
+#import urllib
+#args = []
+#labels = []
+#found = []
+#
+#for y in subs:
+#    for pref, uri in names.items():
+#        if uri in y:
+#            args.append((uri, pref))
+#            labels.append((pref,y))
+#            found.append(y)          
+#args = list(set(args))    
+#labels= list(set(labels))
+#
+#for y in subs:
+#    if y not in found:
+#        print('missing URI!',y)
+#        labels.append(('ex',y))
+#labels= list(set(labels))
+#
+#labels
+##%%
+#sh_labels = []
+#uri_list = list(set(subs))
+#prefixes = names.items()
+#
+#def parse_uri(URI):
+#        if '#' in URI:
+#            label = URI.split("#")[-1]
+#        else:
+#            label = URI.split("/")[-1]
+#        return label    
+#
+#nncount = 0
+#new_ns = []
+#ns_args = []
+#
+#
+#
+#
+#
+#
+##%%
+#count = 0
+#
+#        
+#            
+#for x in uri_list:
+#    count = count +1
+#    sh_label_gen(x, count)    
+#    
 
-def fetch_uri(uri: str):
-    req = requests.get(uri)
-    if not req.ok:
-        print(req.text)
-        return None
-    return req.text
+#%%
+import json
+    
+with open('namespaces.json','r', encoding='utf-8') as fin:
+    names = json.load(fin) 
+    
+    
+    
+from rdflib import Graph
 
-def generate_prefixes(prefixes):
-    prefixes = [line for line in turtle.split('\n') if "@prefix" in line]
+G = Graph()
+G.parse('https://trellis.sinopia.io/repository/washington/83337200-3e1f-4a11-8177-de83111d67bc',format='ttl')
+
+def parse_uri(URI):
+        if '#' in URI:
+            label = URI.split("#")[-1]
+        else:
+            label = URI.split("/")[-1]
+        return label    
     
-    pre_binds = []
-    ## processsing to pull out namespaces and URIs
-    for x in prefixes:
-        x = x.replace('@prefix', '')
-        x = x.replace('>', "")
-        x = x.replace('<', "")
-        x = x.replace(': ', " ")
-        x = x.split(' .')
-        x = x[0].split(" ")
-        pre_binds.append(x)
+def gen_prefix_bindings():
+    count = 0
+    subs = []
+    for s,p,o in G.triples((None,None,None)):
+        subs.append(p)
+    for pred in subs:
+        if pred.replace(parse_uri(pred),'') not in names.values():
+            count = count +1
+            names['ns'+str(count)] = pred.replace(parse_uri(pred),'')
+    for pref,uri in names.items():
+        for s in subs:
+            if uri == s.replace(parse_uri(s),''):
+                G.bind(pref,uri)
+    return subs
+
+def sh_label_gen(uri):
+    match = None
+    parsed = uri.replace(parse_uri(uri),'')
+    for cur, pref in names.items():
+        if pref == parsed:
+            return cur+'_'+parse_uri(uri)
     
-    ## formats the above to be sent to bind method
-    args = []
-    for x in pre_binds:
-        args.append((x[1], x[-1]))
+
+links = gen_prefix_bindings()
+for lin in links:
+    print(sh_label_gen(lin))
+
+
+
+#%%
+names.keys()
+
+#%%
+http://id.loc.gov/ontologies/bflc/catalogerID
+http://id.loc.gov/ontologies/bflc/catalogerID
+
+
+
+#%%
+trans = []
+for x,v in labels:
+    trans.append(v)
+from collections import Counter
+c = Counter(trans)
+
+#%%
+https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWeb.ttl
+    
+#%%
+
+
+for x in labels:
+    print(gen_shape_labels(x[1],x[0]))
+
+#%%
+
+print(G.serialize(format='ttl').decode())
+
+
+
+#%%
+
+flipped = {}
+
+for key, value in names.items():
+    if value not in flipped:
+        flipped[value] = [key]
+    else:
+        flipped[value].append(key)
+for k,v in flipped.items():
+    if len(v) >1:
+        print(k,v)
+
+
+
+#potential cleaning needs

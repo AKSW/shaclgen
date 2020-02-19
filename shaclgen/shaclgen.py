@@ -2,11 +2,12 @@
 
 
 from rdflib import Graph, Namespace,  URIRef, BNode
-import rdflib
+import rdflib, json
 from collections import Counter
 from rdflib.util import guess_format
 import collections
 from rdflib.namespace import XSD, RDF, OWL, RDFS
+from urllib.parse import urlparse
 
 
 class data_graph():
@@ -19,8 +20,10 @@ class data_graph():
         self.CLASSES = collections.OrderedDict()
         self.PROPS = collections.OrderedDict()
         self.OUT = []
-        
-#        
+        with open('shaclgen/namespaces.json','r', encoding='utf-8') as fin:
+            self.names = json.load(fin)
+        self.namespaces = []
+              
 #    def extract_pairs(self):
 #         
 #        classes = []
@@ -44,6 +47,49 @@ class data_graph():
 #        c = Counter(x[2] for x in tupes)
 #        self.OUT = [x + ('unique',) if c[x[2]] == 1 else x + ('repeat',) for x in tupes]
 #        print(self.OUT)
+        
+        
+
+    
+    def parse_uri(self, URI):
+        if '#' in URI:
+            label = URI.split("#")[-1]
+        else:
+            label = URI.split("/")[-1]
+        return label       
+                
+        
+    def gen_prefix_bindings(self):
+        count = 0
+        subs = []
+        for s,p,o in self.G.triples((None,None,None)):
+            subs.append(p)
+        for pred in subs:
+            if pred.replace(self.parse_uri(pred),'') not in self.names.values():
+                count = count +1
+                self.names['ns'+str(count)] = pred.replace(self.parse_uri(pred),'')
+        for pref,uri in self.names.items():
+            for s in subs:
+                if uri == s.replace(self.parse_uri(s),''):
+                    self.namespaces.append((pref,uri))
+        self.namespaces = list(set(self.namespaces))
+
+    def sh_label_gen(self,uri):
+        parsed = uri.replace(self.parse_uri(uri),'')
+        for cur, pref in self.names.items():
+            if pref == parsed:
+                return cur+'_'+self.parse_uri(uri)
+                
+    def uri_validator(self,x):
+        try:
+            result = urlparse(x)
+            return all([result.scheme, result.netloc])
+        except:
+            return False
+
+
+
+
 
     def gen_shape_labels(self, URI):
         if '#' in URI:
@@ -63,7 +109,7 @@ class data_graph():
 
         for class_item in self.CLASSES.keys():
             count = count +1
-            self.CLASSES[class_item]['label'] = self.gen_shape_labels(class_item)+str(count)
+            self.CLASSES[class_item]['label'] = self.sh_label_gen(class_item)
 
 
 
@@ -82,7 +128,7 @@ class data_graph():
             count = count +1
             self.PROPS[p]['classes']=[]
         
-            self.PROPS[p]['label'] = self.gen_shape_labels(p)+str(count)
+            self.PROPS[p]['label'] = self.sh_label_gen(p)
             prop_classes = []
             
             for sub,pred,obj in self.G.triples((None, p, None)):
@@ -104,17 +150,32 @@ class data_graph():
         
    
     
-    def gen_graph(self, serial='turtle', graph_format=None):
+    def gen_graph(self, serial='turtle', graph_format=None, namespace=None):
         self.extract_props()
-
+        self.gen_prefix_bindings()
 
         ng = rdflib.Graph()
         
         SH = Namespace('http://www.w3.org/ns/shacl#')
         ng.bind('sh', SH) 
-        EX = Namespace('http://www.example.org/')
-        ng.bind('ex', EX)
-       
+        
+        for x in self.namespaces:
+            ng.bind(x[0],x[1])
+        
+        if namespace != None:
+            if self.uri_validator(namespace[0]) != False:
+                uri = namespace[0]
+                if namespace[0][-1] not in ['#','/','\\']:
+                    uri = namespace[0]+'/'
+                EX = Namespace(uri)
+                ng.bind(namespace[1], EX)
+            else:
+                print('##malformed URI, using http://example.org/ instead...')
+                EX = Namespace('http://www.example.org/')
+                ng.bind('ex', EX)
+        else: 
+            EX = Namespace('http://www.example.org/')
+            ng.bind('ex', EX)
         
         for c in self.CLASSES.keys():
             label = self.CLASSES[c]['label']
