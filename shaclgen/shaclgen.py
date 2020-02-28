@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-from rdflib import Graph, Namespace,  URIRef, BNode
+from rdflib import Namespace,  URIRef, BNode, Literal
 import rdflib, json
 from collections import Counter
 from rdflib.util import guess_format
@@ -15,7 +15,7 @@ class data_graph():
         self.G = rdflib.Graph()
         
         for graph in args:
-            self.G.parse(graph,format=guess_format(graph))
+            self.G.parse(graph,format=guess_format(graph))  
         
         self.CLASSES = collections.OrderedDict()
         self.PROPS = collections.OrderedDict()
@@ -24,31 +24,6 @@ class data_graph():
             self.names = json.load(fin)
         self.namespaces = []
               
-#    def extract_pairs(self):
-#         
-#        classes = []
-#        for s,p,o in self.G.triples( (None,  RDF.type, None) ):
-#            classes.append(o)
-#        
-#        classes = sorted(list(set(classes)))
-#    
-#        tupes = []
-#        count = 0
-#        for clas in classes:
-#            count = count +1
-#            for s,p,o in self.G.triples((None, RDF.type, clas)):
-#                for s,p1,o1 in self.G.triples((s, None, None)):
-#                    tupes.append((count,clas,p1))
-#        
-#        tupes = list(set(tupes))
-#    
-#        tupes = [x for x in tupes if x[2] != rdflib.term.URIRef('http://www.w3.org/1999/02/22-rdf-syntax-ns#type')]
-#
-#        c = Counter(x[2] for x in tupes)
-#        self.OUT = [x + ('unique',) if c[x[2]] == 1 else x + ('repeat',) for x in tupes]
-#        print(self.OUT)
-        
-        
 
     
     def parse_uri(self, URI):
@@ -64,6 +39,9 @@ class data_graph():
         subs = []
         for s,p,o in self.G.triples((None,None,None)):
             subs.append(p)
+        for s,p,o in self.G.triples((None,RDF.type,None)):
+            subs.append(o)
+        subs = list(set(subs))
         for pred in subs:
             if pred.replace(self.parse_uri(pred),'') not in self.names.values():
                 count = count +1
@@ -86,7 +64,6 @@ class data_graph():
             return all([result.scheme, result.netloc])
         except:
             return False
-
 
 
 
@@ -125,6 +102,9 @@ class data_graph():
         
         count = 0
         for p in self.PROPS.keys():
+            self.PROPS[p]['nodekind'] = None
+            self.PROPS[p]['cardinality'] = None
+
             count = count +1
             self.PROPS[p]['classes']=[]
         
@@ -147,13 +127,29 @@ class data_graph():
 
             else:
                 self.PROPS[p]['type'] = 'repeat'
+    def extract_contraints(self):
+        self.extract_props()
         
+        for prop in self.PROPS.keys():
+            types = []
+            for s,p,o in self.G.triples((None, prop, None)):
+                types.append(type(o))
+            if len(set(types)) == 1:
+                if types[0] == URIRef:
+                    print('uriref found')
+                    self.PROPS[prop]['nodekind'] = 'IRI'
+                elif types[0] == BNode:
+                    print('bnode found')
+                    self.PROPS[prop]['nodekind'] = 'BNode'
+                elif types[0] == Literal:
+                    print('literal found')
+                    self.PROPS[prop]['nodekind'] = 'Literal'    
    
     
-    def gen_graph(self, serial='turtle', graph_format=None, namespace=None):
+    def gen_graph(self, serial='turtle', graph_format=None, namespace=None, verbose=None):
         self.extract_props()
         self.gen_prefix_bindings()
-
+        self.extract_contraints()
         ng = rdflib.Graph()
         
         SH = Namespace('http://www.w3.org/ns/shacl#')
@@ -184,34 +180,26 @@ class data_graph():
             ng.add( (EX[label], SH.nodeKind, SH.BlankNodeOrIRI) )    
             
         for p in self.PROPS.keys():
-            if graph_format == 'nf' or graph_format == 'ef':
-
-                if self.PROPS[p]['type'] == 'unique':
-                    blank = BNode()
-                    ng.add( (EX[self.PROPS[p]['classes'][0]], SH.property, blank) )
-                    ng.add( (blank, SH.path, p))
- 
-                    if graph_format =='ef':
-                        ng.add( (EX[self.PROPS[p]['label']], RDF.type, SH.PropertyShape) )
-                        ng.add( (EX[self.PROPS[p]['label']], SH.path, p) )
-                    else:
-                        pass
-                       
-                else:
-                    for class_prop in self.PROPS[p]['classes']:
-                        ng.add( (EX[class_prop], SH.property, EX[self.PROPS[p]['label']]) )
-                    ng.add( (EX[self.PROPS[p]['label']], RDF.type, SH.PropertyShape) )
-                    ng.add( (EX[self.PROPS[p]['label']], SH.path, p) )
-           
-            else:
-                ng.add( (EX[self.PROPS[p]['label']], RDF.type, SH.PropertyShape) )
-                ng.add( (EX[self.PROPS[p]['label']], SH.path, p) )
-                ng.add( (EX[self.PROPS[p]['label']], RDF.type, SH.PropertyShape) )
-                ng.add( (EX[self.PROPS[p]['label']], SH.path, p) )
+            
+            ng.add( (EX[self.PROPS[p]['label']], RDF.type, SH.PropertyShape) )
+            ng.add( (EX[self.PROPS[p]['label']], SH.path, p) )
+            ng.add( (EX[self.PROPS[p]['label']], RDF.type, SH.PropertyShape) )
+            ng.add( (EX[self.PROPS[p]['label']], SH.path, p) )
 #                
             for class_prop in self.PROPS[p]['classes']:
                 ng.add( (EX[class_prop], SH.property, EX[self.PROPS[p]['label']]) )
-
-            
+            if self.PROPS[p]['nodekind'] == 'IRI':
+                 ng.add( (EX[self.PROPS[p]['label']], SH.nodeKind, SH.IRI) )
+            elif self.PROPS[p]['nodekind'] == 'BNode':
+                 ng.add( (EX[self.PROPS[p]['label']], SH.nodeKind, SH.BlankNode) )
+            elif self.PROPS[p]['nodekind'] == 'Literal':
+                 ng.add( (EX[self.PROPS[p]['label']], SH.nodeKind, SH.Literal) )
         print(ng.serialize(format=serial).decode())
+        
+        
+    
+        
+        
+        
+        
  

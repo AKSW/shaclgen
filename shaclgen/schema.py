@@ -6,8 +6,14 @@ from rdflib.namespace import SKOS, DC, DCTERMS, FOAF, DOAP, XSD
 from rdflib.term import URIRef, Literal, BNode
 import collections, json
 from urllib.parse import urlparse
+from rdflib.collection import Collection
 
-
+"""
+current assumptions: 
+    - rdfs:range / unionOf - this is only being used on either all Classes or all Datatypes - is this correct?
+    - restrictions on a given property do not require domain or range declaration to be present
+        
+"""
 class schema():
     def __init__(self, args:list):
         self.G = Graph()
@@ -28,18 +34,21 @@ class schema():
             label = URI.split("#")[-1]
         else:
             label = URI.split("/")[-1]
-        return label       
-                
-        
+        return str(label)
+               
+     
     def gen_prefix_bindings(self):
         count = 0
         subs = []
-        for s,p,o in self.G.triples((None,None,None)):
-            subs.append(p)
+        for s,p,o in self.G.triples((None,RDF.type,None)):
+            if type(s) != BNode:
+                subs.append(s)
+      
         for pred in subs:
             if pred.replace(self.parse_uri(pred),'') not in self.names.values():
                 count = count +1
                 self.names['ns'+str(count)] = pred.replace(self.parse_uri(pred),'')
+        subs = list(set(subs))
         for pref,uri in self.names.items():
             for s in subs:
                 if uri == s.replace(self.parse_uri(s),''):
@@ -51,6 +60,7 @@ class schema():
         for cur, pref in self.names.items():
             if pref == parsed:
                 return cur+'_'+self.parse_uri(uri)
+            
                 
     def uri_validator(self,x):
         try:
@@ -58,8 +68,7 @@ class schema():
             return all([result.scheme, result.netloc])
         except:
             return False    
-        
-   
+ 
     def extract_props(self):    
         properties = []
         
@@ -87,26 +96,65 @@ class schema():
             count = count + 1
             s = URIRef(prop)           
             self.PROPS[prop]['domain']= None
+            self.PROPS[prop]['domain_union']= None
             self.PROPS[prop]['range']= None
+            self.PROPS[prop]['range_union']= None
+            self.PROPS[prop]['range_value']= None
+
             self.PROPS[prop]['e_prop'] = None
             self.PROPS[prop]['label'] = self.sh_label_gen(prop)
+            self.PROPS[prop]['shape_name'] = None
+            self.PROPS[prop]['definition'] = None
 
-            for domain in self.G.objects(subject=s, predicate=RDFS.domain):
-                if type(domain) != BNode:
-                    self.PROPS[prop]['domain'] = domain
-               
-            for ranges in self.G.objects(subject=s, predicate=RDFS.range):
-                if type(ranges) != BNode:
-                    self.PROPS[prop]['range'] = ranges
+
+
+#            for domain in self.G.objects(subject=s, predicate=RDFS.domain):
+#                if type(domain) != BNode:
+#                    self.PROPS[prop]['domain'] = domain
+            for sub,pred,ob in self.G.triples((s, RDFS.domain, None)):
+                if type(ob) != BNode:
+                    self.PROPS[prop]['domain'] = ob
+                else:
+                    for sub1, pred1, ob1 in self.G.triples((ob, None, None)):
+
+                        if pred1 == OWL.unionOf:
+                            c = Collection(self.G,ob1)
+                            print(c)
+                            self.PROPS[prop]['domain_union'] = c
+                            
+            
+            
+            for sub,pred,ob in self.G.triples((s, RDFS.range, None)):
+                if type(ob) != BNode:
+                    self.PROPS[prop]['range'] = ob
+                else:
+                    for sub1, pred1, ob1 in self.G.triples((ob, None, None)):
+                        if pred1 == OWL.oneOf:
+                            c = Collection(self.G,ob1)
+                            self.PROPS[prop]['range_value'] = c
+                        if pred1 == OWL.unionOf:
+                            c = Collection(self.G,ob1)
+                            self.PROPS[prop]['range_union'] = c
+                                                        
 
             for equal in self.G.objects(subject=s, predicate=OWL.equivalentProperty):
                 self.PROPS[prop]['e_prop'] = equal
+
+            for defin in self.G.objects(subject=s, predicate=RDFS.comment):
+                self.PROPS[prop]['definition'] = defin
             
+            
+            for name in self.G.objects(subject=s, predicate=RDFS.label):
+        
+                self.PROPS[prop]['shape_name'] = name
+                if self.PROPS[prop]['shape_name'] == None:
+                    self.PROPS[prop]['shape_name'] = self.sh_label_gen(prop)
             
     
     
     
     def extract_classes(self):    
+        self.gen_prefix_bindings()
         classes = []
         for s,p,o in self.G.triples((None,RDF.type,OWL.Class)):
             if type(s) != BNode:
@@ -119,19 +167,22 @@ class schema():
             else:
                 pass
             
-        count = 0    
         for c in sorted(classes):
             self.CLASSES[c] = {}
         for c in self.CLASSES.keys():
-            count = count +1
             self.CLASSES[c]['label'] = self.sh_label_gen(c)
-            
-            
+            self.CLASSES[c]['definition'] = None    
+            s = URIRef(c)           
+            for name in self.G.objects(subject=s, predicate=RDFS.label):
+                self.CLASSES[c]['shape_name'] = name
+                if self.CLASSES[c]['shape_name'] == None:
+                    self.CLASSES[c]['shape_name'] = self.sh_label_gen(c)       
+            for defin in self.G.objects(subject=s, predicate=RDFS.comment):
+                self.CLASSES[c]['definition'] = defin
             
             
     def extract_restrictions(self):
-        # does not handle nested restrictions within other class descriptions
-        
+
         restrictions = []
         for s,p,o in self.G.triples((None, OWL.onProperty, None)):
             restriction = s
@@ -175,7 +226,7 @@ class schema():
                 
             
     def gen_graph(self, serial='turtle', namespace=None):
-
+        self.gen_prefix_bindings()
         self.extract_props()
         self.extract_classes()
         self.extract_restrictions()
@@ -183,11 +234,10 @@ class schema():
         SH = Namespace('http://www.w3.org/ns/shacl#')
         ng.bind('sh', SH) 
         
-#        EX = Namespace('http://www.example.org/')
-#        ng.bind('ex', EX)
+        EX = Namespace('http://www.example.org/')
+        ng.bind('ex', EX)
         
         if namespace != None:
-            print(namespace)
             if self.uri_validator(namespace[0]) != False:
                 uri = namespace[0]
                 if namespace[0][-1] not in ['#','/','\\']:
@@ -205,76 +255,187 @@ class schema():
         
         
         
-        # add class Node Shapes
+#         add class Node Shapes
         for c in self.CLASSES.keys():
-            label = self.CLASSES[c]['label']
-            ng.add((EX[label], RDF.type, SH.NodeShape))
-            ng.add((EX[label], SH.targetClass, c))
-            ng.add((EX[label], SH.name, Literal(label+' Node shape')))
+            clabel = self.CLASSES[c]['label']
+            ng.add((EX[clabel], RDF.type, SH.NodeShape))
+            ng.add((EX[clabel], SH.targetClass, c))
+            ng.add((EX[clabel], SH.name, Literal(self.CLASSES[c]['shape_name']+' Node shape')))
+            ng.add((EX[clabel], SH.nodeKind, SH.BlankNodeOrIRI))
+            if self.CLASSES[c]['definition'] is not None:
+                ng.add((EX[clabel], SH.description, Literal((self.CLASSES[c]['definition']))))
+            
 
-            ng.add((EX[label], SH.nodeKind, SH.BlankNodeOrIRI))
         for p in self.PROPS.keys():
-            if self.PROPS[p]['domain'] is not None:
-                blank = BNode()
-                if self.PROPS[p]['domain'] in self.CLASSES.keys():
-                    label = self.CLASSES[self.PROPS[p]['domain']]['label']
-                    ng.add((EX[label], SH.property, blank))
-                    ng.add((EX[label], SH.name, Literal(label+' Property shape')))
+            label = self.PROPS[p]['label']
+            ng.add((EX[label], SH.name, Literal(self.PROPS[p]['shape_name'] +' Property shape')))
+            ng.add((EX[label], RDF.type, SH.PropertyShape))
+            ng.add((EX[label], SH.path, p))
+            
+            
+            if self.PROPS[p]['range_value'] is not None:
+                rang = self.PROPS[p]['range_value']
+                st = BNode()
+                ng.add((EX[label], SH['in'], st))
+                Collection(ng,st,[Literal(x) for x in rang])
 
-                    ng.add((blank, SH.path, p))
-                    if self.PROPS[p]['range'] is not None:
-                        rang = self.PROPS[p]['range']
-                        if rang in self.datatypes:
-                            ng.add((blank, SH.datatype, rang))
-                        else:
-                            ng.add((blank, SH['class'], rang ))
-                    for r in self.REST.keys():
-                        if self.REST[r]['onProp'] == p and self.REST[r]['onClass'] == self.PROPS[p]['domain']:
-                            if self.REST[r]['type'] in (OWL.cardinality):
-                                ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
-                                ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
-                            elif self.REST[r]['type'] in (OWL.minCardinality):
-                                ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
-                            elif self.REST[r]['type'] in (OWL.maxCardinality):
-                                ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
-                            else:
-                                pass
-                        else:
-                            pass
+            if self.PROPS[p]['range'] is not None:
+                rang = self.PROPS[p]['range']
+                if rang in self.datatypes:
+                    ng.add((EX[label], SH.datatype, rang))
+                
                 else:
-                    label = self.PROPS[p]['label']
-                    ng.add((EX[label], RDF.type, SH.NodeShape))
-                    ng.add((EX[label], SH.name, Literal(label+' Property shape')))
-
-                    ng.add((EX[label], SH.targetSubjectsOf, p))
-                    ng.add((EX[label], SH.nodeKind, SH.BlankNodeOrIRI))
-                    ng.add((EX[label], SH.property, blank))
-                    ng.add((blank, SH.path, p))
-                    if self.PROPS[p]['range'] is not None:
-                            rang = self.PROPS[p]['range']
-                            if rang in self.datatypes:
-                                ng.add((blank, SH.datatype, rang))
-                            else:
-                                ng.add((blank, SH['class'], rang ))
-            else:
-                blank = BNode()
-                label = self.PROPS[p]['label']
-                ng.add((EX[label], SH.name, Literal(label+' Property shape')))
-
-                ng.add((EX[label], RDF.type, SH.NodeShape))
-                ng.add((EX[label], SH.targetSubjectsOf, p))
-                ng.add((EX[label], SH.nodeKind, SH.BlankNodeOrIRI))
-                ng.add((EX[label], SH.property, blank))
-                ng.add((blank, SH.path, p))
-                if self.PROPS[p]['range'] is not None:
-                        rang = self.PROPS[p]['range']
-                        if rang in self.datatypes:
-                            ng.add((blank, SH.datatype, rang))
+                    ng.add((EX[label], SH['class'], rang ))
+            
+            
+            ## create range unions using sh:or
+            if self.PROPS[p]['range_union'] is not None:
+                rang = self.PROPS[p]['range_union']
+                if set(rang).issubset(self.datatypes) == True:
+                    blan = BNode()
+                    listp = []
+                    
+                    st = BNode(label+str(0)+'a')
+                    ng.add((EX[label], EX['or'], st))
+                    
+                    for x,y in enumerate(rang):
+                        if x == 0:
+                            ng.add((st, RDF.first, BNode(label+str(x)+'_name') ))
+                            ng.add((BNode(label+str(x)+'_name'), SH['class'], y))
+                    
+                            ng.add((st, RDF.rest, BNode(label+str(x+1)+'a')))
+                            
+                            
+                            
                         else:
-                            ng.add((blank, SH['class'], rang ))
+                            ng.add((BNode(label+str(x)+'a'), RDF.first, BNode(label+str(x)+'_name') ))
+                            ng.add((BNode(label+str(x)+'_name'), SH['class'], y))
+                        if x+1 ==len(rang):
+                            ng.add((BNode(label+str(x)+'a'), RDF.rest, RDF.nil))
+                        else:
+                            ng.add((BNode(label+str(x)+'a'), RDF.rest, BNode(label+str(x+1)+'a')))
+               
+                else:
+                    blan = BNode()
+                    listp = []
+                    
+                    st = BNode(label+str(0)+'a')
+                    ng.add((EX[label], EX['or'], st))
+                    
+                    for x,y in enumerate(rang):
+                        if x == 0:
+                            ng.add((st, RDF.first, BNode(label+str(x)+'_name') ))
+                            ng.add((BNode(label+str(x)+'_name'), SH['class'], y))
+                    
+                            ng.add((st, RDF.rest, BNode(label+str(x+1)+'a')))
+                            
+                            
+                            
+                        else:
+                            ng.add((BNode(label+str(x)+'a'), RDF.first, BNode(label+str(x)+'_name') ))
+                            ng.add((BNode(label+str(x)+'_name'), SH['class'], y))
+                        if x+1 ==len(rang):
+                            ng.add((BNode(label+str(x)+'a'), RDF.rest, RDF.nil))
+                        else:
+                            ng.add((BNode(label+str(x)+'a'), RDF.rest, BNode(label+str(x+1)+'a')))
+
+           
+            
+            
+            
+            
+            
+            if self.PROPS[p]['definition'] is not None:
+                ng.add((EX[label], SH.description, Literal((self.PROPS[p]['definition']))))
+            
+            
+            if self.PROPS[p]['domain'] is not None:         
+                if self.PROPS[p]['domain'] in self.CLASSES.keys():
+                    dlabel = self.CLASSES[self.PROPS[p]['domain']]['label']
+                    plabel = self.PROPS[p]['label']#
+                    ng.add((EX[dlabel], SH.property, EX[plabel]))
+            
+            if self.PROPS[p]['domain_union'] is not None:         
+                for d in self.PROPS[p]['domain_union']:
+                    if d in self.CLASSES.keys():
+                        dlabel = self.CLASSES[d]['label']
+                        plabel = self.PROPS[p]['label']#
+                        ng.add((EX[dlabel], SH.property, EX[plabel]))
+                    
+                    
+            for r in self.REST.keys():
+                blank = BNode()
+
+                if self.REST[r]['onProp'] == p: #and self.REST[r]['onClass'] == self.PROPS[p]['domain']:
+                    
+                    ng.add((EX[self.sh_label_gen(self.PROPS[p]['domain'])], SH.property, blank ))
+                    ng.add((blank, SH.path, p ))
+                    if self.REST[r]['type'] in (OWL.cardinality):
+                        
+                        ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+                        ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+                    elif self.REST[r]['type'] in (OWL.minCardinality):
+                        ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+                    elif self.REST[r]['type'] in (OWL.maxCardinality):
+                        ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+                    else:
+                        pass
+                   
+                    
+                    
+                    
+#                    ng.add((blank, SH.name, Literal(self.PROPS[p]['shape_name'] +' Property shape')))
+#                    ng.add((blank, SH.path, p))
+#                    if self.PROPS[p]['definition'] is not None:
+#                        ng.add((blank, SH.description, Literal((self.PROPS[p]['definition']))))
+#
+#                    if self.PROPS[p]['range'] is not None:
+#                        rang = self.PROPS[p]['range']
+#                        if rang in self.datatypes:
+#                            ng.add((blank, SH.datatype, rang))
+#                        else:
+#                            ng.add((blank, SH['class'], rang ))
+#                    for r in self.REST.keys():
+#                        if self.REST[r]['onProp'] == p and self.REST[r]['onClass'] == self.PROPS[p]['domain']:
+#                            if self.REST[r]['type'] in (OWL.cardinality):
+#                                ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+#                                ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+#                            elif self.REST[r]['type'] in (OWL.minCardinality):
+#                                ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+#                            elif self.REST[r]['type'] in (OWL.maxCardinality):
+#                                ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+#                            else:
+#                                pass
+#                        else:
+#                            pass
+#                else:
+#                    label = self.PROPS[p]['label']
+#                    ng.add((EX[label], RDF.type, SH.NodeShape))
+#                    ng.add((EX[label], SH.name, Literal(self.PROPS[p]['shape_name'] +' Property shape')))
+#                    ng.add((EX[label], SH.targetSubjectsOf, p))
+#                    ng.add((EX[label], SH.nodeKind, SH.BlankNodeOrIRI))
+#                    ng.add((EX[label], SH.property, blank))
+#                    ng.add((blank, SH.path, p))
+#                    if self.PROPS[p]['range'] is not None:
+#                            rang = self.PROPS[p]['range']
+#                            if rang in self.datatypes:
+#                                ng.add((blank, SH.datatype, rang))
+#                            else:
+#                                ng.add((blank, SH['class'], rang ))
+#            else:
+#                blank = BNode()
+#                label = self.PROPS[p]['label']
+#                ng.add((EX[label], SH.name, Literal(self.PROPS[p]['shape_name'] +' Property shape')))
+#                ng.add((EX[label], RDF.type, SH.NodeShape))
+#                ng.add((EX[label], SH.targetSubjectsOf, p))
+#                ng.add((EX[label], SH.nodeKind, SH.BlankNodeOrIRI))
+#                ng.add((EX[label], SH.property, blank))
+#                ng.add((blank, SH.path, p))
+#                if self.PROPS[p]['range'] is not None:
+#                        rang = self.PROPS[p]['range']
+#                        if rang in self.datatypes:
+#                            ng.add((blank, SH.datatype, rang))
+#                        else:
+#                            ng.add((blank, SH['class'], rang ))
         
-        print(ng.serialize(format=serial).decode())        
-
-
-
-     
+        print(ng.serialize(format='ttl').decode())        
