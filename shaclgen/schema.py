@@ -22,7 +22,7 @@ class schema():
         self.CLASSES = collections.OrderedDict()
         self.PROPS = collections.OrderedDict()    
         self.REST = collections.OrderedDict()   
-        with open('namespaces.json','r', encoding='utf-8') as fin:
+        with open('/namespaces.json','r', encoding='utf-8') as fin:
             self.names = json.load(fin)
         self.namespaces = []
         self.datatypes = [XSD.string, XSD.boolean, XSD.time, XSD.date, XSD.dateTime, XSD.integer, XSD.decimal, 

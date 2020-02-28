@@ -9,6 +9,7 @@ import argparse
 from argparse import RawDescriptionHelpFormatter
 from argparse import RawTextHelpFormatter
 
+
 parser = argparse.ArgumentParser(
      formatter_class=RawDescriptionHelpFormatter,
      description=("""
@@ -45,8 +46,9 @@ parser.add_argument("-ns","--namespace", nargs='+',help="optional shape namespac
 
 args = parser.parse_args()
 
-
+import os
 def main():
+    print(os.listdir())
     if args.ontology:      
         g = schema(args.graph)
         kwargs = {'serial': 'turtle'}

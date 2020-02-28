@@ -20,7 +20,7 @@ class data_graph():
         self.CLASSES = collections.OrderedDict()
         self.PROPS = collections.OrderedDict()
         self.OUT = []
-        with open('namespaces.json','r', encoding='utf-8') as fin:
+        with open('shaclgen/namespaces.json','r', encoding='utf-8') as fin:
             self.names = json.load(fin)
         self.namespaces = []
               
