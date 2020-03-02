@@ -25,7 +25,7 @@ class data_graph():
         self.OUT = []
         
 
-        path = 'namespaces.json'  
+        path = 'prefixes/namespaces.json'  
         filepath = pkg_resources.resource_filename(__name__, path)              
         
         with open(filepath,'r', encoding='utf-8') as fin:

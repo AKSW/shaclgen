@@ -12,7 +12,7 @@ setup(
     name = 'shaclgen',
     version = '0.2.4',
     packages = ['shaclgen'],
-    data_files = ['shaclgen/*.json'],
+    package_data = {'shaclgen': ['prefixes/*.json']},
     description='Shacl graph generator',
     long_description=l_description,
     author='Alexis Keely',

@@ -28,7 +28,7 @@ class schema():
         self.datatypes = [XSD.string, XSD.boolean, XSD.time, XSD.date, XSD.dateTime, XSD.integer, XSD.decimal, 
                           XSD.nonNegativeInteger, XSD.negativeInteger, RDFS.Literal, XSD.positiveInteger, XSD.nonPositiveInteger]
      
-        path = 'namespaces.json'  
+        path = 'prefixes/namespaces.json'  
         filepath = pkg_resources.resource_filename(__name__, path)              
         
         with open(filepath,'r', encoding='utf-8') as fin:
