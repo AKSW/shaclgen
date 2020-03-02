@@ -8,6 +8,9 @@ from rdflib.util import guess_format
 import collections
 from rdflib.namespace import XSD, RDF, OWL, RDFS
 from urllib.parse import urlparse
+import pkg_resources
+
+
 
 
 class data_graph():
@@ -20,11 +23,14 @@ class data_graph():
         self.CLASSES = collections.OrderedDict()
         self.PROPS = collections.OrderedDict()
         self.OUT = []
-        with open('shaclgen/namespaces.json','r', encoding='utf-8') as fin:
+        
+
+        path = 'namespaces.json'  
+        filepath = pkg_resources.resource_filename(__name__, path)              
+        
+        with open(filepath,'r', encoding='utf-8') as fin:
             self.names = json.load(fin)
         self.namespaces = []
-              
-
     
     def parse_uri(self, URI):
         if '#' in URI:
@@ -136,13 +142,10 @@ class data_graph():
                 types.append(type(o))
             if len(set(types)) == 1:
                 if types[0] == URIRef:
-                    print('uriref found')
                     self.PROPS[prop]['nodekind'] = 'IRI'
                 elif types[0] == BNode:
-                    print('bnode found')
                     self.PROPS[prop]['nodekind'] = 'BNode'
                 elif types[0] == Literal:
-                    print('literal found')
                     self.PROPS[prop]['nodekind'] = 'Literal'    
    
     
