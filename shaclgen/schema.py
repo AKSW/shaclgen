@@ -188,55 +188,60 @@ class schema():
                 self.CLASSES[c]['definition'] = defin
             
             
-#    def extract_restrictions(self):
-#
-#        restrictions = []
-#        for s,p,o in self.G.triples((None, OWL.onProperty, None)):
-#            restriction = s
-#            for s in self.G.subjects(object=restriction, predicate=None):
-#                if type(s) != BNode:
-#                    for o in self.G.objects(subject=restriction, predicate=OWL.onProperty): 
-#                        if type(o) != BNode:    
-#                            restrictions.append(restriction)
-#        for r in sorted(restrictions):
-#            self.REST[r] = {}
-#        
-#        for rest in self.REST.keys():  
-#            for o in self.G.objects(subject=rest, predicate=OWL.onProperty):
-#                self.REST[rest]['onProp']= o
-#           
-#            for s in self.G.subjects(object=rest, predicate=None):
-#                self.REST[rest]['onClass']= s
-#                
-#            rest_type = []
-#            rest_val =[]
-#            for s,p,o in self.G.triples((rest,OWL.maxCardinality,None)):
-#                rest_type.append(p)
-#                rest_val.append(o)
-#            for p in self.G.triples((rest,OWL.minCardinality, None)):
-#                rest_type.append(p)
-#                rest_val.append(o)
-#            for s,p,o in self.G.triples((rest, OWL.cardinality, None)):
-#                rest_type.append(p)
-#                rest_val.append(o)        
-#            for s,p,o in self.G.triples((rest,OWL.allValuesFrom,None)):
-#                rest_type.append(p)
-#                rest_val.append(o)
-#            for s,p,o in self.G.triples((rest,OWL.someValuesFrom, None)):
-#                rest_type.append(p)
-#                rest_val.append(o)            
-#            for s,p,o in self.G.triples((rest,OWL.hasValue, None)):
-#                rest_type.append(p)
-#                rest_val.append(o)                
-#            self.REST[rest]['type'] = rest_type[0]
-#            self.REST[rest]['value'] = rest_val[0]
+    def extract_restrictions(self):
+
+        restrictions = []
+        for s,p,o in self.G.triples((None, OWL.onProperty, None)):
+            restriction = s
+            for s in self.G.subjects(object=restriction, predicate=None):
+                if type(s) != BNode:
+                    for o in self.G.objects(subject=restriction, predicate=OWL.onProperty): 
+                        if type(o) != BNode:    
+                            restrictions.append(restriction)
+        for r in sorted(restrictions):
+            self.REST[r] = {}
+        
+        for rest in self.REST.keys():  
+            print(rest)
+            for o in self.G.objects(subject=rest, predicate=OWL.onProperty):
+                self.REST[rest]['onProp']= o
+           
+            for s in self.G.subjects(object=rest, predicate=None):
+                self.REST[rest]['onClass']= s
+                
+            rest_type = []
+            rest_val =[]
+            for s,p,o in self.G.triples((rest,OWL.maxCardinality,None)):
+                rest_type.append(p)
+                rest_val.append(o)
+            for p in self.G.triples((rest,OWL.minCardinality, None)):
+                rest_type.append(p)
+                rest_val.append(o)
+            for s,p,o in self.G.triples((rest, OWL.cardinality, None)):
+                rest_type.append(p)
+                rest_val.append(o)        
+            for s,p,o in self.G.triples((rest,OWL.allValuesFrom,None)):
+                rest_type.append(p)
+                rest_val.append(o)
+            for s,p,o in self.G.triples((rest,OWL.someValuesFrom, None)):
+                rest_type.append(p)
+                rest_val.append(o)            
+            for s,p,o in self.G.triples((rest,OWL.hasValue, None)):
+                rest_type.append(p)
+                rest_val.append(o)       
+            for s,p,o in self.G.triples((rest,OWL.minQualifiedCardinality, None)):
+                rest_type.append(p)
+                rest_val.append(o)       
+            self.REST[rest]['type'] = rest_type[0]
+            self.REST[rest]['value'] = rest_val[0]
                 
             
     def gen_graph(self, serial='turtle', namespace=None):
+        print('dev mode again dummy')
         self.gen_prefix_bindings()
         self.extract_props()
         self.extract_classes()
-#        self.extract_restrictions()
+        self.extract_restrictions()
         ng = Graph()
         SH = Namespace('http://www.w3.org/ns/shacl#')
         ng.bind('sh', SH) 
@@ -367,7 +372,33 @@ class schema():
                         dlabel = self.CLASSES[d]['label']
                         plabel = self.PROPS[p]['label']#
                         ng.add((EX[dlabel], SH.property, EX[plabel]))
+        
+        for r in self.REST.keys():
+            blank = BNode()
+
+#                if self.REST[r]['onProp'] == p: #and self.REST[r]['onClass'] == self.PROPS[p]['domain']:
                     
+            ng.add((EX[self.sh_label_gen(self.REST[r]['onClass'])], SH.property, blank ))
+            ng.add((blank, SH.path, self.REST[r]['onProp'] ))
+            if self.REST[r]['type'] in (OWL.cardinality):
+                        
+                ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+                ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+            elif self.REST[r]['type'] in (OWL.minCardinality):
+                ng.add((blank, SH.minCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+            elif self.REST[r]['type'] in (OWL.maxCardinality):
+                ng.add((blank, SH.maxCount, Literal(self.REST[r]['value'], datatype=XSD.integer)))
+            elif self.REST[r]['type'] in (OWL.allValuesFrom):
+                ng.add((blank, SH['class'], self.REST[r]['value']))
+            elif self.REST[r]['type'] in (OWL.someValuesFrom):
+                ng.add((blank, SH['qualifiedMinCount'], Literal(1, datatype=XSD.integer)))
+                ng.add((blank, SH['qualifiedValueShape'], BNode('count'+str(rest)) ))               
+                ng.add((BNode('count'+str(rest)), SH['class'], self.REST[r]['value'] ))
+            else:
+                pass
+                   
+                    
+                  
                     
 #            for r in self.REST.keys():
 #                blank = BNode()
@@ -387,9 +418,9 @@ class schema():
 #                    else:
 #                        pass
 #                   
-                    
-                    
-                    
+#                    
+#                    
+#                    
 #                    ng.add((blank, SH.name, Literal(self.PROPS[p]['shape_name'] +' Property shape')))
 #                    ng.add((blank, SH.path, p))
 #                    if self.PROPS[p]['definition'] is not None:
