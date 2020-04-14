@@ -52,8 +52,6 @@ Command line arguments: :
 
     optional arguments:
     -h, --help            show this help message and exit
-    -nf, --nested         generates a nested shape file
-    -ef, --extended       generates an expanded shape file
     -o, --ontology        input file(s) or URL(s) is a schema or ontology
     -s SERIALIZATION, --serialization SERIALIZATION
                           result graph serialization, default is turtle
