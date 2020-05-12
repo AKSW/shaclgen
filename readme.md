@@ -24,9 +24,6 @@ Using pip: :
 
     pip install shaclgen
 
-From source:
-
-<https://github.com/alexiskeely/shaclgen>
 
 Command line use:
 -----------------
