@@ -10,7 +10,7 @@ with open('requirements.txt') as reqs:
 
 setup(
     name = 'shaclgen',
-    version = '0.2.4.1',
+    version = '0.2.5',
     packages = ['shaclgen'],
     package_data = {'shaclgen': ['prefixes/*.json']},
     description='Shacl graph generator',

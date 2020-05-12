@@ -18,15 +18,13 @@ parser = argparse.ArgumentParser(
     Shaclgen takes either a data graph(s) or schema(s) as input and generates 
     a basic shape file based on the classes and properties present. 
     
-    Shape files from data graphs:
-    By default, the input graph is processed as a data graph (instance triples).
-    Three formats are possible for data grapghs: simple, nested, and extended.
+    usage:
+        shaclgen path_to_graph optional arguments
+        $ shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/webResource-1-0-0.nt -ns www.example.org
+
     
-    Simple: Each class and property generate individual Node- and PropertyShapes        
-    Nested: Property shapes will be nested in nodeshapes iif 
-            they occur with one class.
-    Extended: Expands nested shapes to create individual property shapes for each 
-            property, in addition to nesting them when appropriate. 
+    Shape files from data graphs:
+    By default, the input graph is processed as instance triples.
         
     Shape files from ontologies:
     If the input is a schema or ontology (-o), shaclgen will generate 
@@ -36,9 +34,9 @@ parser = argparse.ArgumentParser(
     
 parser.add_argument("graph", nargs='+',type=str, help="The data graph(s).")
 
-group = parser.add_mutually_exclusive_group()
-group.add_argument("-nf", "--nested", action="store_true", help='generates a nested shape file')
-group.add_argument("-ef", "--extended", action="store_true", help='generates an expanded shape file')
+#group = parser.add_mutually_exclusive_group()
+#group.add_argument("-nf", "--nested", action="store_true", help='generates a nested shape file')
+#group.add_argument("-ef", "--extended", action="store_true", help='generates an expanded shape file')
 parser.add_argument("-o", "--ontology", action="store_true", help='input file(s) or URL(s) is a schema or ontology')
 parser.add_argument("-s", "--serialization", help='result graph serialization, default is turtle')
 parser.add_argument("-ns","--namespace", nargs='+',help="optional shape namespace declaration")
@@ -47,6 +45,7 @@ parser.add_argument("-ns","--namespace", nargs='+',help="optional shape namespac
 args = parser.parse_args()
 
 def main():
+    print('devy dev')
     if args.ontology:      
         g = schema(args.graph)
         kwargs = {'serial': 'turtle'}
@@ -58,10 +57,10 @@ def main():
     else:
         kwargs = {'serial': 'turtle'}
         g = data_graph(args.graph)
-        if args.nested:
-            kwargs['graph_format'] = 'nf'
-        elif args.extended:
-            kwargs['graph_format'] = 'ef'
+#        if args.nested:
+#            kwargs['graph_format'] = 'nf'
+#        elif args.extended:
+#            kwargs['graph_format'] = 'ef'
         if args.serialization:
             kwargs['serial'] = args.serialization
         if args.namespace:
