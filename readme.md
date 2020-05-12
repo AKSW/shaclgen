@@ -5,16 +5,8 @@ Shaclgen takes either a data graph(s) or schema(s) as input and
 generates a basic shape file based on the classes and properties
 present.
 
-**Shape files from data graphs:** By default, the input graph is
-processed as a data graph (instance triples). Three formats are possible
-for data graphs: simple, nested, and extended.
-
--   Simple: Each class and property generate individual Node- and
-    PropertyShapes.
--   Nested: Property shapes will be nested in nodeshapes iif they occur
-    with one class.
--   Extended: Expands nested shapes to create individual property shapes
-    for each property, in addition to nesting them when appropriate.
+**Shape files from instance data:** By default, the input graph is
+processed as a instance triples. 
 
 **Shape files from ontologies:** If the input is a schema or ontology,
 shaclgen generates a nested shape file: properties with rdfs:domain
@@ -39,7 +31,7 @@ From source:
 Command line use:
 -----------------
 
-    $ shaclgen graph [optional arguments]
+    $ shaclgen [graph] [optional arguments]
 
 Example usage: :
 
@@ -53,6 +45,7 @@ Command line arguments: :
     optional arguments:
     -h, --help            show this help message and exit
     -o, --ontology        input file(s) or URL(s) is a schema or ontology
+    -ns, --namespace      optional shape namespace declaration
     -s SERIALIZATION, --serialization SERIALIZATION
                           result graph serialization, default is turtle
 
@@ -61,4 +54,4 @@ Command line arguments: :
 This project is still in development. Comments, questions, and issues
 are welcome!
 
-Contact alexiskeelie at gmail.come
+Contact alexiskeelie at gmail.com
