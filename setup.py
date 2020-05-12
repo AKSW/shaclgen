@@ -10,14 +10,14 @@ with open('requirements.txt') as reqs:
 
 setup(
     name = 'shaclgen',
-    version = '0.2.5',
+    version = '0.2.5.1',
     packages = ['shaclgen'],
     package_data = {'shaclgen': ['prefixes/*.json']},
     description='Shacl graph generator',
     long_description=l_description,
     author='Alexis Keely',
-    url='https://github.com/alexiskeely/shaclgen',
-    author_email='alexiskm@uw.com',
+    url='https://github.com/uwlib-cams/shaclgen',
+    author_email='alexiskeelie@gmail.com',
     install_requires=requirements,
     keywords=['Linked Data', 'Semantic Web', 'Python',
               'SHACL', 'Shapes', 'Schema', 'Validate'],

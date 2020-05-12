@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(
     a basic shape file based on the classes and properties present. 
     
     usage:
-        shaclgen path_to_graph optional arguments
+        shaclgen [path to graph] [optional arguments]
         $ shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/webResource-1-0-0.nt -ns www.example.org
 
     
@@ -45,7 +45,6 @@ parser.add_argument("-ns","--namespace", nargs='+',help="optional shape namespac
 args = parser.parse_args()
 
 def main():
-    print('devy dev')
     if args.ontology:      
         g = schema(args.graph)
         kwargs = {'serial': 'turtle'}
