@@ -1,7 +1,7 @@
 SHACLGEN
 ========
 
-Shaclgen takes either a data graph(s) or schema(s) as input and
+Shaclgen takes either a instance graph(s) or schema(s) as input and
 generates a basic shape file based on the classes and properties
 present.
 
@@ -13,7 +13,14 @@ shaclgen generates a nested shape file: properties with rdfs:domain
 defined in the ontology will be nested within the appropriate NodeShape.
 rdfs:range definitions for XML and rdfs datatypes are included.
 
+       
+        
 Added support for OWL constructions is planned.
+
+
+ 
+    
+    
 
 * * * * *
 
@@ -32,7 +39,7 @@ Command line use:
 
 Example usage: :
 
-    $ shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/webResource-1-0-0.nt
+    $ shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/webResource-1-0-0.nt 
 
 Command line arguments: :
 
@@ -42,9 +49,28 @@ Command line arguments: :
     optional arguments:
     -h, --help            show this help message and exit
     -o, --ontology        input file(s) or URL(s) is a schema or ontology
-    -ns, --namespace      optional shape namespace declaration
+    -ns, --namespace      optional shape namespace declaration. ex: http://www.example.com exam
     -s SERIALIZATION, --serialization SERIALIZATION
-                          result graph serialization, default is turtle
+                          result graph serialization, default is turtle. example:. -s nt
+
+Serialization options:
+        turtle = turtle
+        ntriples = nt
+        rdfxml = xml
+        n3 = n3
+
+Namespace Example usage: :
+
+    $ shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/webResource-1-0-0.nt -s nt
+
+        
+Namespace argument:
+    The namespace argument is takes a full URL and prefix.
+
+Namespace Example usage: :
+
+    $ shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/webResource-1-0-0.nt -ns http://www.example.org uwlib
+
 
 * * * * *
 

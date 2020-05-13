@@ -165,7 +165,7 @@ class data_graph():
             if self.uri_validator(namespace[0]) != False:
                 uri = namespace[0]
                 if namespace[0][-1] not in ['#','/','\\']:
-                    uri = namespace[0]+'/'
+                    uri = namespace[0]+'#'
                 EX = Namespace(uri)
                 ng.bind(namespace[1], EX)
             else:
