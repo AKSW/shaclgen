@@ -256,7 +256,7 @@ class schema():
             self.REST[rest]['value'] = rest_val[0]
                 
             
-    def gen_graph(self, serial='turtle', namespace=None):
+    def gen_graph(self, serial='turtle', namespace=None, implicit_class_target=False):
         self.gen_prefix_bindings()
         self.extract_props()
         self.extract_classes()
@@ -288,13 +288,20 @@ class schema():
         
 #         add class Node Shapes
         for c in self.CLASSES.keys():
+            subject = c
             clabel = self.CLASSES[c]['label']
-            ng.add((EX[clabel], RDF.type, SH.NodeShape))
-            ng.add((EX[clabel], SH.targetClass, c))
+
+            if not implicit_class_target:
+                subject = EX[clabel]
+                ng.add((subject, SH.targetClass, c))
+            else:
+                ng.add((subject,RDF.type, RDFS.Class ))
+
+            ng.add((subject, RDF.type, SH.NodeShape))
 #            ng.add((EX[clabel], SH.name, Literal(self.CLASSES[c]['shape_name']+' Node shape')))
-            ng.add((EX[clabel], SH.nodeKind, SH.BlankNodeOrIRI))
+            ng.add((subject, SH.nodeKind, SH.BlankNodeOrIRI))
             if self.CLASSES[c]['definition'] is not None:
-                ng.add((EX[clabel], SH.description, Literal((self.CLASSES[c]['definition']))))
+                ng.add((subject, SH.description, Literal((self.CLASSES[c]['definition']))))
             
 
         for p in self.PROPS.keys():

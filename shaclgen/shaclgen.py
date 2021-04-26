@@ -149,7 +149,7 @@ class data_graph():
                     self.PROPS[prop]['nodekind'] = 'Literal'    
    
     
-    def gen_graph(self, serial='turtle', graph_format=None, namespace=None, verbose=None):
+    def gen_graph(self, serial='turtle', graph_format=None, namespace=None, verbose=None, implicit_class_target=False):
         self.extract_props()
         self.gen_prefix_bindings()
         self.extract_contraints()
