@@ -262,6 +262,10 @@ class schema():
         self.extract_classes()
         self.extract_restrictions()
         ng = Graph()
+
+        for prefix, namespace in self.G.namespace_manager.namespaces():
+            ng.bind(prefix, namespace)  
+
         SH = Namespace('http://www.w3.org/ns/shacl#')
         ng.bind('sh', SH) 
         
