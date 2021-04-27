@@ -50,6 +50,7 @@ Command line arguments: :
     -h, --help            show this help message and exit
     -o, --ontology        input file(s) or URL(s) is a schema or ontology
     -ns, --namespace      optional shape namespace declaration. ex: http://www.example.com exam
+    -i, --implicit        use implicit class targets with RDFS
     -s SERIALIZATION, --serialization SERIALIZATION
                           result graph serialization, default is turtle. example:. -s nt
 
