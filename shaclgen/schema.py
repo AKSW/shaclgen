@@ -300,6 +300,9 @@ class schema():
                 ng.add((subject, SH.targetClass, c))
             else:
                 ng.add((subject,RDF.type, RDFS.Class ))
+                # Copy rdfs:subClassOf
+                for t in self.G.triples((subject,RDFS.subClassOf,None)):
+                    ng.add(t)
 
             ng.add((subject, RDF.type, SH.NodeShape))
 #            ng.add((EX[clabel], SH.name, Literal(self.CLASSES[c]['shape_name']+' Node shape')))
