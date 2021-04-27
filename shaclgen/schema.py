@@ -403,20 +403,26 @@ class schema():
                 ng.add((EX[label], SH.description, Literal((self.PROPS[p]['definition']))))
             
             
-            if self.PROPS[p]['domain'] is not None:         
-                if self.PROPS[p]['domain'] in self.CLASSES.keys():
-                    dlabel = self.CLASSES[self.PROPS[p]['domain']]['label']
+            if self.PROPS[p]['domain'] is not None:
+                subject = self.PROPS[p]['domain']         
+                if subject in self.CLASSES.keys():
                     plabel = self.PROPS[p]['label']#
-                    ng.add((EX[dlabel], SH.property, EX[plabel]))
+                    if implicit_class_target:
+                        ng.add((subject, SH.property, EX[plabel]))
+                    else:
+                        dlabel = self.CLASSES[subject]['label']
+                        ng.add((EX[dlabel], SH.property, EX[plabel]))
             
             if self.PROPS[p]['domain_union'] is not None:         
                 for d in self.PROPS[p]['domain_union']:
                     if d in self.CLASSES.keys():
-                        dlabel = self.CLASSES[d]['label']
                         plabel = self.PROPS[p]['label']#
-                        ng.add((EX[dlabel], SH.property, EX[plabel]))
-        
-        
+
+                        if implicit_class_target:
+                            ng.add((d, SH.property, EX[plabel]))
+                        else:
+                            dlabel = self.CLASSES[d]['label']
+                            ng.add((EX[dlabel], SH.property, EX[plabel]))
         
         
         for r in self.REST.keys():
