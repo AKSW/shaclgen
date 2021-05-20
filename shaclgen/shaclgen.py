@@ -143,6 +143,7 @@ class data_graph():
         for prop in self.PROPS.keys():
             types = []
             classes = []
+            datatypes = []
             for s,p,o in self.G.triples((None, prop, None)):
                 nodeType = type(o)
                 if not types:
@@ -153,6 +154,8 @@ class data_graph():
                 if nodeType == URIRef:
                     for _, _, objectClass in self.G.triples((o, RDF.type, None)):
                         classes.append(objectClass)
+                elif nodeType == Literal:
+                    datatypes.append(o.datatype)
 
             if len(set(types)) == 1:
                 if types[0] == URIRef:
@@ -163,6 +166,8 @@ class data_graph():
                     self.PROPS[prop]['nodekind'] = 'BNode'
                 elif types[0] == Literal:
                     self.PROPS[prop]['nodekind'] = 'Literal'
+                    if len(set(datatypes)) == 1:
+                        self.PROPS[prop]['datatype'] = datatypes[0]
 
 
     def gen_graph(self, serial='turtle', graph_format=None, namespace=None, verbose=None, implicit_class_target=False):
@@ -213,4 +218,6 @@ class data_graph():
                  ng.add( (EX[self.PROPS[p]['label']], SH.nodeKind, SH.Literal) )
             if "objectclass" in self.PROPS[p]:
                 ng.add( (EX[self.PROPS[p]['label']], SH['class'], self.PROPS[p]['objectclass']) )
+            if "datatype" in self.PROPS[p]:
+                ng.add( (EX[self.PROPS[p]['label']], SH.datatype, self.PROPS[p]['datatype']) )
         print(ng.serialize(format=serial).decode())
