@@ -16,9 +16,9 @@ current assumptions:
 
 """
 class schema():
-    def __init__(self, args:list):
+    def __init__(self, graphs:list, prefixes):
         self.G = Graph()
-        for graph in args:
+        for graph in graphs:
             self.G.parse(graph,format=guess_format(graph))
         self.CLASSES = collections.OrderedDict()
         self.PROPS = collections.OrderedDict()
@@ -31,9 +31,12 @@ class schema():
         path = 'prefixes/namespaces.json'
         filepath = pkg_resources.resource_filename(__name__, path)
 
-        with open(filepath,'r', encoding='utf-8') as fin:
+        with open(filepath, 'r', encoding='utf-8') as fin:
             self.names = json.load(fin)
 
+        if prefixes:
+            with open(prefixes, 'r', encoding='utf-8') as fin:
+                self.names.update(json.load(fin))
 
     def parse_uri(self, URI):
         if '#' in URI:

@@ -51,6 +51,7 @@ parser.add_argument("graph", nargs='+',type=str, help="The data graph(s).")
 #group.add_argument("-ef", "--extended", action="store_true", help='generates an expanded shape file')
 parser.add_argument("-o", "--ontology", action="store_true", help='input file(s) or URL(s) is a schema or ontology')
 parser.add_argument("-s", "--serialization", help='result graph serialization, default is turtle. example: -s nt')
+parser.add_argument("-p", "--prefixes", help="optional declaration of namespace prefixes in a json dictionary.")
 parser.add_argument("-ns","--namespace", nargs='+',help="optional shape namespace declaration. example: -ns http://www.example.com exam")
 parser.add_argument("-i", "--implicit", action="store_true", help='use implicit class targets with RDFS')
 
@@ -59,7 +60,7 @@ args = parser.parse_args()
 
 def main():
     if args.ontology:
-        g = schema(args.graph)
+        g = schema(args.graph, args.prefixes)
         kwargs = {'serial': 'turtle'}
         if args.serialization:
             kwargs['serial'] = args.serialization
@@ -70,7 +71,7 @@ def main():
         g.gen_graph(**kwargs)
     else:
         kwargs = {'serial': 'turtle'}
-        g = data_graph(args.graph)
+        g = data_graph(args.graph, args.prefixes)
 #        if args.nested:
 #            kwargs['graph_format'] = 'nf'
 #        elif args.extended:
