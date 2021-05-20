@@ -14,10 +14,10 @@ parser = argparse.ArgumentParser(
      formatter_class=RawDescriptionHelpFormatter,
      description=("""
     ---------------------------Shaclgen------------------------------------------
-   
-    Shaclgen takes either a data graph(s) or schema(s) as input and generates 
-    a basic shape file based on the classes and properties present. 
-    
+
+    Shaclgen takes either a data graph(s) or schema(s) as input and generates
+    a basic shape file based on the classes and properties present.
+
     usage:
         shaclgen [path to graph] [optional arguments]
         $ shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/webResource-1-0-0.nt -ns www.example.org exam
@@ -26,16 +26,16 @@ parser = argparse.ArgumentParser(
     To load multiple graphs simply list all the graphs one after the other. RDF serializtion does not matter.
     example:
         $ shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/webResource-1-0-0.nt https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/collection-1-0-0.ttl
-    
+
     Shape files from data graphs:
     By default, the input graph is processed as instance triples.
-        
+
     Shape files from ontologies:
-    If the input is a schema or ontology (-o), shaclgen will generate 
-    a nested shape file: properties with rdfs:domain defined in the ontology 
+    If the input is a schema or ontology (-o), shaclgen will generate
+    a nested shape file: properties with rdfs:domain defined in the ontology
     will be nested within the appropriate NodeShape. rdfs:range definitions
     for XML and rdfs datatypes are included.
-    
+
     Serialization options:
         turtle = turtle
         ntriples = nt
@@ -43,7 +43,7 @@ parser = argparse.ArgumentParser(
         n3 = n3
 
     """))
-    
+
 parser.add_argument("graph", nargs='+',type=str, help="The data graph(s).")
 
 #group = parser.add_mutually_exclusive_group()
@@ -58,7 +58,7 @@ parser.add_argument("-i", "--implicit", action="store_true", help='use implicit 
 args = parser.parse_args()
 
 def main():
-    if args.ontology:      
+    if args.ontology:
         g = schema(args.graph)
         kwargs = {'serial': 'turtle'}
         if args.serialization:
@@ -87,4 +87,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
