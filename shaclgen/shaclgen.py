@@ -142,11 +142,23 @@ class data_graph():
 
         for prop in self.PROPS.keys():
             types = []
+            classes = []
             for s,p,o in self.G.triples((None, prop, None)):
-                types.append(type(o))
+                nodeType = type(o)
+                if not types:
+                    types.append(nodeType)
+                elif nodeType not in types:
+                    # currently only one type is handled per property
+                    break
+                if nodeType == URIRef:
+                    for _, _, objectClass in self.G.triples((o, RDF.type, None)):
+                        classes.append(objectClass)
+
             if len(set(types)) == 1:
                 if types[0] == URIRef:
                     self.PROPS[prop]['nodekind'] = 'IRI'
+                    if len(set(classes)) == 1:
+                        self.PROPS[prop]['objectclass'] = classes[0]
                 elif types[0] == BNode:
                     self.PROPS[prop]['nodekind'] = 'BNode'
                 elif types[0] == Literal:
@@ -190,8 +202,6 @@ class data_graph():
 
             ng.add( (EX[self.PROPS[p]['label']], RDF.type, SH.PropertyShape) )
             ng.add( (EX[self.PROPS[p]['label']], SH.path, p) )
-            ng.add( (EX[self.PROPS[p]['label']], RDF.type, SH.PropertyShape) )
-            ng.add( (EX[self.PROPS[p]['label']], SH.path, p) )
 #
             for class_prop in self.PROPS[p]['classes']:
                 ng.add( (EX[class_prop], SH.property, EX[self.PROPS[p]['label']]) )
@@ -201,4 +211,6 @@ class data_graph():
                  ng.add( (EX[self.PROPS[p]['label']], SH.nodeKind, SH.BlankNode) )
             elif self.PROPS[p]['nodekind'] == 'Literal':
                  ng.add( (EX[self.PROPS[p]['label']], SH.nodeKind, SH.Literal) )
+            if "objectclass" in self.PROPS[p]:
+                ng.add( (EX[self.PROPS[p]['label']], SH['class'], self.PROPS[p]['objectclass']) )
         print(ng.serialize(format=serial).decode())
