@@ -155,7 +155,7 @@ class data_graph():
                     for _, _, objectClass in self.G.triples((o, RDF.type, None)):
                         classes.append(objectClass)
                 elif nodeType == Literal:
-                    datatypes.append(o.datatype)
+                    datatypes.append(o.datatype or XSD.langString if o.language else XSD.string)
 
             if len(set(types)) == 1:
                 if types[0] == URIRef:
