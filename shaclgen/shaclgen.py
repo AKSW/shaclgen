@@ -220,15 +220,17 @@ class data_graph():
                     ng.add( (EX[self.PROPS[p]['label']], SH['class'], self.PROPS[p]['objectclasses'][0]) )
                 else:
                     classNum = 0
-                    listnode = EX[self.PROPS[p]['label'] + "-class-" + str(classNum)]
+                    listnode = EX[self.PROPS[p]['label'] + "-classlist-" + str(classNum)]
                     ng.add( (EX[self.PROPS[p]['label']], SH['or'], listnode) )
                     for objectclass in set(self.PROPS[p]['objectclasses']):
-                        nextlistnode = EX[self.PROPS[p]['label'] + "-class-" + str(classNum)]
+                        nextlistnode = EX[self.PROPS[p]['label'] + "-classlist-" + str(classNum)]
+                        alternativenode = EX[self.PROPS[p]['label'] + "-class-" + str(classNum)]
                         if classNum > 0:
                             ng.add( (listnode, RDF.rest, nextlistnode) )
                         listnode = nextlistnode
                         classNum += 1
-                        ng.add( (listnode, RDF.first, objectclass) )
+                        ng.add( (listnode, RDF.first, alternativenode) )
+                        ng.add( (alternativenode, SH['class'], objectclass) )
                     ng.add( (listnode, RDF.rest, RDF.nil) )
             if "datatype" in self.PROPS[p]:
                 ng.add( (EX[self.PROPS[p]['label']], SH.datatype, self.PROPS[p]['datatype']) )
