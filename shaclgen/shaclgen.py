@@ -160,8 +160,7 @@ class data_graph():
             if len(set(types)) == 1:
                 if types[0] == URIRef:
                     self.PROPS[prop]['nodekind'] = 'IRI'
-                    if len(set(classes)) == 1:
-                        self.PROPS[prop]['objectclass'] = classes[0]
+                    self.PROPS[prop]['objectclasses'] = classes
                 elif types[0] == BNode:
                     self.PROPS[prop]['nodekind'] = 'BNode'
                 elif types[0] == Literal:
@@ -216,8 +215,21 @@ class data_graph():
                  ng.add( (EX[self.PROPS[p]['label']], SH.nodeKind, SH.BlankNode) )
             elif self.PROPS[p]['nodekind'] == 'Literal':
                  ng.add( (EX[self.PROPS[p]['label']], SH.nodeKind, SH.Literal) )
-            if "objectclass" in self.PROPS[p]:
-                ng.add( (EX[self.PROPS[p]['label']], SH['class'], self.PROPS[p]['objectclass']) )
+            if "objectclasses" in self.PROPS[p]:
+                if len(set(self.PROPS[p]['objectclasses'])) == 1:
+                    ng.add( (EX[self.PROPS[p]['label']], SH['class'], self.PROPS[p]['objectclasses'][0]) )
+                else:
+                    classNum = 0
+                    listnode = EX[self.PROPS[p]['label'] + "-class-" + str(classNum)]
+                    ng.add( (EX[self.PROPS[p]['label']], SH['or'], listnode) )
+                    for objectclass in set(self.PROPS[p]['objectclasses']):
+                        nextlistnode = EX[self.PROPS[p]['label'] + "-class-" + str(classNum)]
+                        if classNum > 0:
+                            ng.add( (listnode, RDF.rest, nextlistnode) )
+                        listnode = nextlistnode
+                        classNum += 1
+                        ng.add( (listnode, RDF.first, objectclass) )
+                    ng.add( (listnode, RDF.rest, RDF.nil) )
             if "datatype" in self.PROPS[p]:
                 ng.add( (EX[self.PROPS[p]['label']], SH.datatype, self.PROPS[p]['datatype']) )
         print(ng.serialize(format=serial).decode())
