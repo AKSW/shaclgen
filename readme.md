@@ -50,6 +50,7 @@ Command line arguments: :
     -h, --help            show this help message and exit
     -o, --ontology        input file(s) or URL(s) is a schema or ontology
     -ns, --namespace      optional shape namespace declaration. ex: http://www.example.com exam
+    -i, --implicit        use implicit class targets with RDFS
     -s SERIALIZATION, --serialization SERIALIZATION
                           result graph serialization, default is turtle. example:. -s nt
 
@@ -70,6 +71,26 @@ Namespace argument:
 Namespace Example usage: :
 
     $ shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/webResource-1-0-0.nt -ns http://www.example.org uwlib
+
+Implicit class usage :
+
+SHACL interprets shapes typed as `rdfs:Class` as the target class of that shape. This is called [Implicit Class Targets](https://www.w3.org/TR/shacl/#implicit-targetClass). 
+By setting `-i` or `--implicit`, shaclgen will reuse the class definitions in the ontology (ie. instances of `rdfs:Class` or `owl:Class`) as shapes and not create new URIs.
+Instances of `owl:Class` will be typed as `rdfs:Class` in the output.
+Triples that tie the class to one of its parent classes with `rdfs:subclassOf` will be copied by default.
+
+Example ontology input:
+
+    ex:Person a owl:Class.
+
+Example output without `-i`:
+
+    ex:PersonShape a sh:NodeShape;
+        sh:targetClass ex:Person .
+
+Example output with `-i`:
+
+    ex:Person a rdfs:Class; sh:NodeShape.
 
 
 * * * * *

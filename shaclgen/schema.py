@@ -256,12 +256,16 @@ class schema():
             self.REST[rest]['value'] = rest_val[0]
                 
             
-    def gen_graph(self, serial='turtle', namespace=None):
+    def gen_graph(self, serial='turtle', namespace=None, implicit_class_target=False):
         self.gen_prefix_bindings()
         self.extract_props()
         self.extract_classes()
         self.extract_restrictions()
         ng = Graph()
+
+        for prefix, namespace in self.G.namespace_manager.namespaces():
+            ng.bind(prefix, namespace)  
+
         SH = Namespace('http://www.w3.org/ns/shacl#')
         ng.bind('sh', SH) 
         
@@ -288,18 +292,31 @@ class schema():
         
 #         add class Node Shapes
         for c in self.CLASSES.keys():
+            subject = c
             clabel = self.CLASSES[c]['label']
-            ng.add((EX[clabel], RDF.type, SH.NodeShape))
-            ng.add((EX[clabel], SH.targetClass, c))
+
+            if not implicit_class_target:
+                subject = EX[clabel]
+                ng.add((subject, SH.targetClass, c))
+            else:
+                ng.add((subject,RDF.type, RDFS.Class ))
+                # Copy rdfs:subClassOf
+                for t in self.G.triples((subject,RDFS.subClassOf,None)):
+                    ng.add(t)
+
+            ng.add((subject, RDF.type, SH.NodeShape))
 #            ng.add((EX[clabel], SH.name, Literal(self.CLASSES[c]['shape_name']+' Node shape')))
-            ng.add((EX[clabel], SH.nodeKind, SH.BlankNodeOrIRI))
+            ng.add((subject, SH.nodeKind, SH.BlankNodeOrIRI))
             if self.CLASSES[c]['definition'] is not None:
-                ng.add((EX[clabel], SH.description, Literal((self.CLASSES[c]['definition']))))
+                ng.add((subject, SH.description, Literal((self.CLASSES[c]['definition']))))
             
 
         for p in self.PROPS.keys():
             label = self.PROPS[p]['label']
 #            ng.add((EX[label], SH.name, Literal(str(self.PROPS[p]['shape_name']) +' Property shape')))
+            # copy rdfs:label as property shape names
+            for o in self.G.objects(subject=p,predicate=RDFS.label):
+                ng.add((EX[label], SH.name, o))
             ng.add((EX[label], RDF.type, SH.PropertyShape))
             ng.add((EX[label], SH.path, p))
             
@@ -392,20 +409,26 @@ class schema():
                 ng.add((EX[label], SH.description, Literal((self.PROPS[p]['definition']))))
             
             
-            if self.PROPS[p]['domain'] is not None:         
-                if self.PROPS[p]['domain'] in self.CLASSES.keys():
-                    dlabel = self.CLASSES[self.PROPS[p]['domain']]['label']
+            if self.PROPS[p]['domain'] is not None:
+                subject = self.PROPS[p]['domain']         
+                if subject in self.CLASSES.keys():
                     plabel = self.PROPS[p]['label']#
-                    ng.add((EX[dlabel], SH.property, EX[plabel]))
+                    if implicit_class_target:
+                        ng.add((subject, SH.property, EX[plabel]))
+                    else:
+                        dlabel = self.CLASSES[subject]['label']
+                        ng.add((EX[dlabel], SH.property, EX[plabel]))
             
             if self.PROPS[p]['domain_union'] is not None:         
                 for d in self.PROPS[p]['domain_union']:
                     if d in self.CLASSES.keys():
-                        dlabel = self.CLASSES[d]['label']
                         plabel = self.PROPS[p]['label']#
-                        ng.add((EX[dlabel], SH.property, EX[plabel]))
-        
-        
+
+                        if implicit_class_target:
+                            ng.add((d, SH.property, EX[plabel]))
+                        else:
+                            dlabel = self.CLASSES[d]['label']
+                            ng.add((EX[dlabel], SH.property, EX[plabel]))
         
         
         for r in self.REST.keys():
