@@ -314,6 +314,9 @@ class schema():
         for p in self.PROPS.keys():
             label = self.PROPS[p]['label']
 #            ng.add((EX[label], SH.name, Literal(str(self.PROPS[p]['shape_name']) +' Property shape')))
+            # copy rdfs:label as property shape names
+            for o in self.G.objects(subject=p,predicate=RDFS.label):
+                ng.add((EX[label], SH.name, o))
             ng.add((EX[label], RDF.type, SH.PropertyShape))
             ng.add((EX[label], SH.path, p))
             
