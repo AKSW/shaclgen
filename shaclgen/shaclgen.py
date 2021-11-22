@@ -234,4 +234,4 @@ class data_graph():
                     ng.add( (listnode, RDF.rest, RDF.nil) )
             if "datatype" in self.PROPS[p]:
                 ng.add( (EX[self.PROPS[p]['label']], SH.datatype, self.PROPS[p]['datatype']) )
-        print(ng.serialize(format=serial).decode())
+        print(ng.serialize(format=serial))
