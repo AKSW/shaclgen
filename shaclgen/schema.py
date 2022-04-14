@@ -254,7 +254,7 @@ class schema:
             self.REST[rest]["type"] = rest_type[0]
             self.REST[rest]["value"] = rest_val[0]
 
-    def gen_graph(self, serial="turtle", namespace=None, implicit_class_target=False):
+    def gen_graph(self, namespace=None, implicit_class_target=False):
         self.gen_prefix_bindings()
         self.extract_props()
         self.extract_classes()
@@ -553,4 +553,4 @@ class schema:
             else:
                 pass
 
-        print(ng.serialize(format="ttl").decode())
+        return ng

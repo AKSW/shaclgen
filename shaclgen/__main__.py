@@ -3,6 +3,7 @@ from .shaclgen import data_graph
 from .schema import schema
 
 import click
+from sys import stdout
 from rdflib import Graph
 from rdflib.util import guess_format
 
@@ -14,6 +15,11 @@ from rdflib.util import guess_format
     "--ontology",
     help="input file(s) or URL(s) is a schema or ontology",
     default=False,
+)
+@click.option(
+    "--output",
+    help="output file or - for standard out",
+    default="-",
 )
 @click.option(
     "-s",
@@ -44,7 +50,7 @@ from rdflib.util import guess_format
     help="use implicit class targets with RDFS",
     default=False,
 )
-def main(graphs, ontology, serial, prefixes, namespace, implicit_class_target):
+def main(graphs, ontology, output, serial, prefixes, namespace, implicit_class_target):
     """
     ---------------------------Shaclgen---------------------------
 
@@ -92,9 +98,15 @@ def main(graphs, ontology, serial, prefixes, namespace, implicit_class_target):
         g = schema(source_graph, prefixes)
     else:
         g = data_graph(source_graph, prefixes)
-    g.gen_graph(
-        serial=serial, namespace=namespace, implicit_class_target=implicit_class_target
+    shape_graph = g.gen_graph(
+        namespace=namespace, implicit_class_target=implicit_class_target
     )
+
+    if output == "-":
+        shape_file = stdout.buffer
+    else:
+        shape_file = output
+    shape_graph.serialize(shape_file, format=serial)
 
 
 if __name__ == "__main__":
