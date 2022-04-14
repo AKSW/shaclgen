@@ -6,7 +6,7 @@ authors = ["Alexis Keely <alexiskeelie@gmail.com>", "Natanael Arndt <natanael.ar
 homepage = "https://github.com/uwlib-cams/shaclgen"
 repository = "https://github.com/uwlib-cams/shaclgen"
 license = 'MIT'
-readme = "readme.md"
+readme = "README.md"
 keywords = ['Linked Data', 'Semantic Web', 'Python', 'SHACL', 'Shapes', 'Schema', 'Validate']
 classifiers = [
   'Development Status :: 4 - Beta',
