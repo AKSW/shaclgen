@@ -168,7 +168,6 @@ class data_graph:
     def gen_graph(
         self,
         serial="turtle",
-        graph_format=None,
         namespace=None,
         verbose=None,
         implicit_class_target=False,

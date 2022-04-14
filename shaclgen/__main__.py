@@ -48,9 +48,6 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument("graph", nargs="+", type=str, help="The data graph(s).")
 
-# group = parser.add_mutually_exclusive_group()
-# group.add_argument("-nf", "--nested", action="store_true", help='generates a nested shape file')
-# group.add_argument("-ef", "--extended", action="store_true", help='generates an expanded shape file')
 parser.add_argument(
     "-o",
     "--ontology",
@@ -95,10 +92,6 @@ def main():
     else:
         kwargs = {"serial": "turtle"}
         g = data_graph(args.graph, args.prefixes)
-        #        if args.nested:
-        #            kwargs['graph_format'] = 'nf'
-        #        elif args.extended:
-        #            kwargs['graph_format'] = 'ef'
         if args.serialization:
             kwargs["serial"] = args.serialization
         if args.namespace:
