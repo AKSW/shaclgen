@@ -25,7 +25,7 @@ uvloop = ["uvloop (>=0.15.2)"]
 name = "click"
 version = "8.1.2"
 description = "Composable command line interface toolkit"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -37,7 +37,7 @@ importlib-metadata = {version = "*", markers = "python_version < \"3.8\""}
 name = "colorama"
 version = "0.4.4"
 description = "Cross-platform colored terminal text."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -173,7 +173,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "9fcfce50c96527a9e0434b47132785f56d69b5b39e0909f09bc9e4f3faf8611a"
+content-hash = "1faad235a6dc0179c2cdfd4bb06e5ea18c43bbdf3f7ebeac29f5a1b78f267468"
 
 [metadata.files]
 black = [
