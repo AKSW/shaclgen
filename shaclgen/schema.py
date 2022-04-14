@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-
 from rdflib import Graph, RDF, RDFS, OWL, Namespace
 from rdflib.util import guess_format
-from rdflib.namespace import SKOS, DC, DCTERMS, FOAF, DOAP, XSD
+from rdflib.namespace import XSD
 from rdflib.term import URIRef, Literal, BNode
-import collections, json
+import collections
+import json
 from urllib.parse import urlparse
 from rdflib.collection import Collection
 import pkg_resources

@@ -1,12 +1,9 @@
-#!/usr/bin/env python
-
-
 from rdflib import Namespace, URIRef, BNode, Literal
-import rdflib, json
-from collections import Counter
+import rdflib
+import json
 from rdflib.util import guess_format
 import collections
-from rdflib.namespace import XSD, RDF, OWL, RDFS
+from rdflib.namespace import XSD, RDF
 from urllib.parse import urlparse
 import pkg_resources
 

@@ -7,7 +7,6 @@ from .schema import schema
 
 import argparse
 from argparse import RawDescriptionHelpFormatter
-from argparse import RawTextHelpFormatter
 
 
 parser = argparse.ArgumentParser(
