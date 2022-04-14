@@ -16,7 +16,7 @@ current assumptions:
 
 
 class schema:
-    def __init__(self, graph: Graph, prefixes):
+    def __init__(self, graph: Graph, prefixes=None):
         self.G = graph
 
         self.CLASSES = collections.OrderedDict()
