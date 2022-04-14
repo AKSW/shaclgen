@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/env python
-
-#%%
 from .shaclgen import data_graph
 from .schema import schema
 
@@ -19,13 +16,14 @@ parser = argparse.ArgumentParser(
     a basic shape file based on the classes and properties present.
 
     usage:
-        shaclgen [path to graph] [optional arguments]
-        $ shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/webResource-1-0-0.nt -ns www.example.org exam
+        shaclgen [path or url to graph] [optional arguments]
+        $ shaclgen webResource-1-0-0.nt -ns www.example.org exam
 
     Multiple graphs:
-    To load multiple graphs simply list all the graphs one after the other. RDF serializtion does not matter.
+    To load multiple graphs simply list all the graphs one after the other. The
+    RDF serializtion does not matter.
     example:
-        $ shaclgen https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/webResource-1-0-0.nt https://www.lib.washington.edu/static/public/cams/data/datasets/uwSemWebParts/collection-1-0-0.ttl
+        $ shaclgen webResource-1-0-0.nt collection-1-0-0.ttl
 
     Shape files from data graphs:
     By default, the input graph is processed as instance triples.
@@ -68,7 +66,10 @@ parser.add_argument(
     "-ns",
     "--namespace",
     nargs="+",
-    help="optional shape namespace declaration. example: -ns http://www.example.com exam",
+    help="""
+        optional shape namespace declaration.
+        example: -ns http://www.example.com exam
+    """,
 )
 parser.add_argument(
     "-i", "--implicit", action="store_true", help="use implicit class targets with RDFS"

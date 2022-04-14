@@ -66,7 +66,7 @@ class data_graph:
         try:
             result = urlparse(x)
             return all([result.scheme, result.netloc])
-        except:
+        except Exception:
             return False
 
     def gen_shape_labels(self, URI):
@@ -183,8 +183,8 @@ class data_graph:
         for x in self.namespaces:
             ng.bind(x[0], x[1])
 
-        if namespace != None:
-            if self.uri_validator(namespace[0]) != False:
+        if namespace is not None:
+            if self.uri_validator(namespace[0]):
                 uri = namespace[0]
                 if namespace[0][-1] not in ["#", "/", "\\"]:
                     uri = namespace[0] + "#"
