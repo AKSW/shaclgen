@@ -1,5 +1,4 @@
 from rdflib import Graph, RDF, RDFS, OWL, Namespace
-from rdflib.util import guess_format
 from rdflib.namespace import XSD
 from rdflib.term import URIRef, Literal, BNode
 import collections
@@ -17,10 +16,9 @@ current assumptions:
 
 
 class schema:
-    def __init__(self, graphs: list, prefixes):
-        self.G = Graph()
-        for graph in graphs:
-            self.G.parse(graph, format=guess_format(graph))
+    def __init__(self, graph: Graph, prefixes):
+        self.G = graph
+
         self.CLASSES = collections.OrderedDict()
         self.PROPS = collections.OrderedDict()
         self.REST = collections.OrderedDict()
