@@ -74,7 +74,7 @@ class data_graph:
 
     def extract_classes(self):
         types_query = "select distinct ?class_ { ?s rdf:type ?class_ }"
-        for row in self.G.query(types_query, initNs={'rdf': RDF}):
+        for row in self.G.query(types_query, initNs={"rdf": RDF}):
             self.CLASSES[row.class_] = {"label": self.sh_label_gen(row.class_)}
 
     def extract_props(self):
@@ -200,7 +200,10 @@ class data_graph:
                 ng.add((EX[self.PROPS[p]["label"]], SH.nodeKind, SH.BlankNode))
             elif self.PROPS[p]["nodekind"] == "Literal":
                 ng.add((EX[self.PROPS[p]["label"]], SH.nodeKind, SH.Literal))
-            if "objectclasses" in self.PROPS[p] and len(self.PROPS[p]["objectclasses"]) > 0:
+            if (
+                "objectclasses" in self.PROPS[p]
+                and len(self.PROPS[p]["objectclasses"]) > 0
+            ):
                 if len(set(self.PROPS[p]["objectclasses"])) == 1:
                     ng.add(
                         (
