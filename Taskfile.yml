@@ -12,7 +12,7 @@ tasks:
 
   test:
     cmds:
-      - poetry run pytest
+      - poetry run pytest --cov=shaclgen --cov-report=term-missing
 
   ci:
     cmds:
