@@ -79,37 +79,25 @@ class data_graph:
 
     def extract_props(self):
         self.extract_classes()
-        prop = []
 
         prop_query = "select distinct ?prop { ?s ?prop ?o . filter(?prop != rdf:type)}"
-        for row in self.G.query(prop_query, initNs={"rdf": RDF}):
-            prop.append(row.prop)
-            self.PROPS[row.prop] = {
+        prop_subj_classes = "select distinct ?class_ {{ ?sub {prop} ?o ; a ?class_ . }}"
+        for property_row in self.G.query(prop_query, initNs={"rdf": RDF}):
+            prop = property_row.prop
+            self.PROPS[prop] = {
                 "nodekind": None,
                 "cardinality": None,
                 "classes": [],
-                "label": self.sh_label_gen(row.prop),
+                "label": self.sh_label_gen(prop),
             }
+            for class_row in self.G.query(prop_subj_classes.format(prop=prop.n3())):
+                class_ = class_row.class_
+                self.PROPS[prop]["classes"].append(self.CLASSES[class_]["label"])
 
-        for p in self.PROPS.keys():
-            prop_classes = []
-
-            for sub, pred, obj in self.G.triples((None, p, None)):
-                for sub1, pred1, obj1 in self.G.triples((sub, RDF.type, None)):
-                    prop_classes.append(obj1)
-
-            uris = []
-
-            [uris.append(x) for x in prop_classes if x not in uris]
-
-            for x in uris:
-                self.PROPS[p]["classes"].append(self.CLASSES[x]["label"])
-
-            if len(self.PROPS[p]["classes"]) == 1:
-                self.PROPS[p]["type"] = "unique"
-
+            if len(self.PROPS[prop]["classes"]) == 1:
+                self.PROPS[prop]["type"] = "unique"
             else:
-                self.PROPS[p]["type"] = "repeat"
+                self.PROPS[prop]["type"] = "repeat"
 
     def extract_constraints(self):
         self.extract_props()
