@@ -215,7 +215,7 @@ class data_graph():
                  ng.add( (EX[self.PROPS[p]['label']], SH.nodeKind, SH.BlankNode) )
             elif self.PROPS[p]['nodekind'] == 'Literal':
                  ng.add( (EX[self.PROPS[p]['label']], SH.nodeKind, SH.Literal) )
-            if "objectclasses" in self.PROPS[p]:
+            if "objectclasses" in self.PROPS[p] and len(self.PROPS[p]["objectclasses"]) > 0:
                 if len(set(self.PROPS[p]['objectclasses'])) == 1:
                     ng.add( (EX[self.PROPS[p]['label']], SH['class'], self.PROPS[p]['objectclasses'][0]) )
                 else:
