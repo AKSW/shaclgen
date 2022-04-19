@@ -10,6 +10,10 @@ tasks:
     cmds:
       - poetry install
 
+  code_formating:
+    cmds:
+      - poetry run black shaclgen tests
+
   test:
     cmds:
       - poetry run pytest --cov=shaclgen --cov-report=term-missing
