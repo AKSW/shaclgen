@@ -1,4 +1,3 @@
-
 def assertAskQuery(graph, query):
     result = graph.query(query)
     if not result.askAnswer:
