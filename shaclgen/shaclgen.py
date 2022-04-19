@@ -73,17 +73,9 @@ class data_graph:
         return label + "_"
 
     def extract_classes(self):
-        classes = []
-        for s, p, o in self.G.triples((None, RDF.type, None)):
-            classes.append(o)
-
-        for c in sorted(classes):
-            self.CLASSES[c] = {}
-        count = 0
-
-        for class_item in self.CLASSES.keys():
-            count = count + 1
-            self.CLASSES[class_item]["label"] = self.sh_label_gen(class_item)
+        types_query = "select distinct ?class_ { ?s rdf:type ?class_ }"
+        for row in self.G.query(types_query, initNs={'rdf': RDF}):
+            self.CLASSES[row.class_] = {"label": self.sh_label_gen(row.class_)}
 
     def extract_props(self):
         self.extract_classes()
