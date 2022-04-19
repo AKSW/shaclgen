@@ -1,0 +1,21 @@
+version: '3'
+
+tasks:
+
+  install_dependencies:
+    cmds:
+      - pip install poetry
+
+  install:
+    cmds:
+      - poetry install
+
+  test:
+    cmds:
+      - poetry run pytest
+
+  ci:
+    cmds:
+      - task: install_dependencies
+      - task: install
+      - task: test
