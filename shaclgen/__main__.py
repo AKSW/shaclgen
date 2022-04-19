@@ -65,7 +65,7 @@ def main(graphs, ontology, output, serial, prefixes, namespace, implicit_class_t
     \b
     Multiple graphs:
     To load multiple graphs simply list all the graphs one after the other. The
-    RDF serializtion does not matter.
+    RDF serialization does not matter.
     example:
         $ shaclgen webResource-1-0-0.nt collection-1-0-0.ttl
 
