@@ -20,7 +20,7 @@ tasks:
 
   test:
     cmds:
-      - poetry run pytest --cov=shaclgen --cov-report=term-missing
+      - poetry run pytest -rP --cov=shaclgen --cov-report=term-missing
 
   ci:
     cmds:
