@@ -80,27 +80,18 @@ class data_graph:
     def extract_props(self):
         self.extract_classes()
         prop = []
-        for predicate in self.G.predicates(object=None, subject=None):
-            prop.append(predicate)
-        props = [
-            x
-            for x in prop
-            if x
-            != rdflib.term.URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
-        ]
 
-        for p in sorted(props):
-            self.PROPS[p] = {}
+        prop_query = "select distinct ?prop { ?s ?prop ?o . filter(?prop != rdf:type)}"
+        for row in self.G.query(prop_query, initNs={"rdf": RDF}):
+            prop.append(row.prop)
+            self.PROPS[row.prop] = {
+                "nodekind": None,
+                "cardinality": None,
+                "classes": [],
+                "label": self.sh_label_gen(row.prop),
+            }
 
-        count = 0
         for p in self.PROPS.keys():
-            self.PROPS[p]["nodekind"] = None
-            self.PROPS[p]["cardinality"] = None
-
-            count = count + 1
-            self.PROPS[p]["classes"] = []
-
-            self.PROPS[p]["label"] = self.sh_label_gen(p)
             prop_classes = []
 
             for sub, pred, obj in self.G.triples((None, p, None)):
