@@ -34,3 +34,37 @@ def test_two_classes():
     shacl_graph = extraction_graph.gen_graph()
 
     print(shacl_graph.serialize(format="turtle"))
+
+
+def test_object_class():
+    source_graph = Graph()
+
+    data = """
+    <urn:test:resource> a <urn:test:Class> ;
+    <urn:test:obj_property> <urn:test:other_resource> .
+    <urn:test:other_resource> a <urn:test:OtherClass> .
+    """
+
+    source_graph.parse(data=data, format="turtle")
+
+    extraction_graph = data_graph(source_graph)
+    shacl_graph = extraction_graph.gen_graph()
+
+    print(shacl_graph.serialize(format="turtle"))
+
+
+def test_two_object_classes():
+    source_graph = Graph()
+
+    data = """
+    <urn:test:resource> a <urn:test:Class> ;
+    <urn:test:obj_property> <urn:test:other_resource> .
+    <urn:test:other_resource> a <urn:test:OtherClass>, <urn:test:OtherClass2> .
+    """
+
+    source_graph.parse(data=data, format="turtle")
+
+    extraction_graph = data_graph(source_graph)
+    shacl_graph = extraction_graph.gen_graph()
+
+    print(shacl_graph.serialize(format="turtle"))
