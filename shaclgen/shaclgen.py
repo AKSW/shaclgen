@@ -78,8 +78,6 @@ class data_graph:
             self.CLASSES[row.class_] = {"label": self.sh_label_gen(row.class_)}
 
     def extract_props(self):
-        self.extract_classes()
-
         prop_query = "select distinct ?prop { ?s ?prop ?o . filter(?prop != rdf:type)}"
         prop_subj_classes = "select distinct ?class_ {{ ?sub {prop} ?o ; a ?class_ . }}"
         for property_row in self.G.query(prop_query, initNs={"rdf": RDF}):
@@ -100,7 +98,6 @@ class data_graph:
                 self.PROPS[prop]["type"] = "repeat"
 
     def extract_constraints(self):
-        self.extract_props()
 
         for prop in self.PROPS.keys():
             types = []
@@ -133,8 +130,9 @@ class data_graph:
                         self.PROPS[prop]["datatype"] = datatypes[0]
 
     def gen_graph(self, namespace=None, implicit_class_target=False):
-        self.extract_props()
         self.gen_prefix_bindings()
+        self.extract_classes()
+        self.extract_props()
         self.extract_constraints()
         ng = rdflib.Graph()
 
