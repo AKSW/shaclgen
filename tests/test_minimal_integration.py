@@ -3,7 +3,7 @@ from shaclgen.shaclgen import data_graph
 from helpers import assertAskQuery
 
 
-def test_create_shape():
+def test_create_shape_urn():
     source_graph = Graph()
 
     data = """
@@ -36,6 +36,86 @@ def test_create_shape():
 
             sh:nodeKind sh:IRI ;
             sh:path <urn:test:obj_property> .
+    }
+    """,
+    )
+
+
+def test_create_shape_http_iri_hash():
+    source_graph = Graph()
+
+    data = """
+    @prefix ext: <http://example.org/test/> .
+    @prefix extv: <http://example.org/test/vocab#> .
+    ext:resource a extv:Class ;
+        extv:lit_property "String" ;
+        extv:obj_property ext:other_resource .
+    """
+
+    source_graph.parse(data=data, format="turtle")
+
+    extraction_graph = data_graph(source_graph)
+    shacl_graph = extraction_graph.gen_graph()
+
+    assertAskQuery(
+        shacl_graph,
+        """
+    prefix sh: <http://www.w3.org/ns/shacl#>
+    prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+    ask {
+        ?nodeShape a sh:NodeShape ;
+            sh:nodeKind sh:BlankNodeOrIRI ;
+            sh:targetClass <http://example.org/test/vocab#Class> ;
+            sh:property ?propA, ?propB .
+
+        ?propA a sh:PropertyShape ;
+            sh:datatype xsd:string ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://example.org/test/vocab#lit_property> .
+            ?ropB a sh:PropertyShape ;
+
+            sh:nodeKind sh:IRI ;
+            sh:path <http://example.org/test/vocab#obj_property> .
+    }
+    """,
+    )
+
+
+def test_create_shape_http_iri_slash():
+    source_graph = Graph()
+
+    data = """
+    @prefix ext: <http://example.org/test/> .
+    @prefix extv: <http://example.org/test/vocab/> .
+    ext:resource a extv:Class ;
+        extv:lit_property "String" ;
+        extv:obj_property ext:other_resource .
+    """
+
+    source_graph.parse(data=data, format="turtle")
+
+    extraction_graph = data_graph(source_graph)
+    shacl_graph = extraction_graph.gen_graph()
+
+    assertAskQuery(
+        shacl_graph,
+        """
+    prefix sh: <http://www.w3.org/ns/shacl#>
+    prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+    ask {
+        ?nodeShape a sh:NodeShape ;
+            sh:nodeKind sh:BlankNodeOrIRI ;
+            sh:targetClass <http://example.org/test/vocab/Class> ;
+            sh:property ?propA, ?propB .
+
+        ?propA a sh:PropertyShape ;
+            sh:datatype xsd:string ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://example.org/test/vocab/lit_property> .
+            ?ropB a sh:PropertyShape ;
+
+            sh:nodeKind sh:IRI ;
+            sh:path <http://example.org/test/vocab/obj_property> .
     }
     """,
     )
