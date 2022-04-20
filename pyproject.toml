@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "shaclgen"
+version = "2.5.2"
+description = "Shacl graph generator: python program to generate template shacl graphs"
+authors = ["Alexis Keely <alexiskeelie@gmail.com>", "Natanael Arndt <natanael.arndt@eccenca.com>", "Miel Vander Sande <miel.vandersande@meemoo.be>"]
+homepage = "https://github.com/uwlib-cams/shaclgen"
+repository = "https://github.com/uwlib-cams/shaclgen"
+license = 'MIT'
+readme = "README.md"
+keywords = ['Linked Data', 'Semantic Web', 'Python', 'SHACL', 'Shapes', 'Schema', 'Validate']
+classifiers = [
+  'Development Status :: 4 - Beta',
+  'Programming Language :: Python :: 3',
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+rdflib = "^6.1.1"
+click = "^8.1.2"
+pytest = "^7.1.1"
+
+[tool.poetry.dev-dependencies]
+black = "^22.3.0"
+pytest-cov = "^3.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+shaclgen = "shaclgen.__main__:main"
