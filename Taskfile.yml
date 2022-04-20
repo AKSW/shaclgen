@@ -1,0 +1,30 @@
+version: '3'
+
+tasks:
+
+  install_dependencies:
+    cmds:
+      - pip install poetry
+
+  install:
+    cmds:
+      - poetry install
+
+  code_formating:
+    cmds:
+      - poetry run black shaclgen tests
+
+  code_formating_check:
+    cmds:
+      - poetry run black --check shaclgen tests
+
+  test:
+    cmds:
+      - poetry run pytest -rP --cov=shaclgen --cov-report=term-missing
+
+  ci:
+    cmds:
+      - task: install_dependencies
+      - task: install
+      - task: test
+      - task: code_formating_check
