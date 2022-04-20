@@ -157,7 +157,7 @@ class data_graph:
                         self.PROPS[p]["label"] + "-classlist-" + str(classNum)
                     ]
                     ng.add((EX[self.PROPS[p]["label"]], SH["or"], listnode))
-                    for objectclass in set(self.PROPS[p]["objectclasses"]):
+                    for objectclass in sorted(set(self.PROPS[p]["objectclasses"])):
                         nextlistnode = EX[
                             self.PROPS[p]["label"] + "-classlist-" + str(classNum)
                         ]

@@ -234,6 +234,49 @@ def test_two_object_classes():
     )
 
 
+def test_two_object_classes_are_sorted():
+    source_graph = Graph()
+
+    data = """
+    <urn:test:resource> a <urn:test:Class> ;
+    <urn:test:obj_property> <urn:test:other_resource> .
+    <urn:test:other_resource> a <urn:test:OtherClass>, <urn:test:OtherClass2> .
+    """
+
+    source_graph.parse(data=data, format="turtle")
+
+    extraction_graph = data_graph(source_graph)
+    shacl_graph = extraction_graph.gen_graph()
+
+    assertAskQuery(
+        shacl_graph,
+        """
+    prefix sh: <http://www.w3.org/ns/shacl#>
+    prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+    ask {
+        ?nodeShapeA a sh:NodeShape ;
+            sh:nodeKind sh:BlankNodeOrIRI ;
+            sh:property ?property ;
+            sh:targetClass <urn:test:Class> .
+
+        ?nodeShapeB a sh:NodeShape ;
+            sh:nodeKind sh:BlankNodeOrIRI ;
+            sh:targetClass <urn:test:OtherClass> .
+
+        ?nodeShapeC a sh:NodeShape ;
+            sh:nodeKind sh:BlankNodeOrIRI ;
+            sh:targetClass <urn:test:OtherClass2> .
+
+        ?property a sh:PropertyShape ;
+            sh:nodeKind sh:IRI ;
+            sh:or/rdf:first/sh:class <urn:test:OtherClass> ;
+            sh:or/rdf:rest/rdf:first/sh:class <urn:test:OtherClass2> ;
+            sh:path <urn:test:obj_property> .
+    }
+    """,
+    )
+
+
 def test_object_blank_node():
     source_graph = Graph()
 
