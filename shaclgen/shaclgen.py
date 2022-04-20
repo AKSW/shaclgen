@@ -2,7 +2,8 @@ from rdflib import Namespace, URIRef, BNode, Literal, Graph
 import rdflib
 import json
 import collections
-from rdflib.namespace import XSD, RDF
+from rdflib.namespace import XSD, RDF, SH
+from rdflib.namespace import NamespaceManager
 from urllib.parse import urlparse
 import pkg_resources
 
@@ -18,45 +19,21 @@ class data_graph:
         path = "prefixes/namespaces.json"
         filepath = pkg_resources.resource_filename(__name__, path)
 
+        self.namespaces = NamespaceManager(graph=Graph())
+        self.namespaces.bind("sh", SH)
+
         with open(filepath, "r", encoding="utf-8") as fin:
-            self.names = json.load(fin)
+            for prefix, namespace in json.load(fin).items():
+                self.namespaces.bind(prefix, namespace)
 
         if prefixes:
             with open(prefixes, "r", encoding="utf-8") as fin:
-                self.names.update(json.load(fin))
-
-        self.namespaces = []
-
-    def parse_uri(self, URI):
-        if "#" in URI:
-            label = URI.split("#")[-1]
-        else:
-            label = URI.split("/")[-1]
-        return label
-
-    def gen_prefix_bindings(self):
-        count = 0
-        subs = []
-        for s, p, o in self.G.triples((None, None, None)):
-            subs.append(p)
-        for s, p, o in self.G.triples((None, RDF.type, None)):
-            subs.append(o)
-        subs = list(set(subs))
-        for pred in subs:
-            if pred.replace(self.parse_uri(pred), "") not in self.names.values():
-                count = count + 1
-                self.names["ns" + str(count)] = pred.replace(self.parse_uri(pred), "")
-        for pref, uri in self.names.items():
-            for s in subs:
-                if uri == s.replace(self.parse_uri(s), ""):
-                    self.namespaces.append((pref, uri))
-        self.namespaces = list(set(self.namespaces))
+                for prefix, namespace in json.load(fin).items():
+                    self.namespaces.bind(prefix, namespace)
 
     def sh_label_gen(self, uri):
-        parsed = uri.replace(self.parse_uri(uri), "")
-        for cur, pref in self.names.items():
-            if pref == parsed:
-                return cur + "_" + self.parse_uri(uri)
+        prefix, namespace, name = self.namespaces.compute_qname(uri)
+        return prefix + "_" + name
 
     def uri_validator(self, x):
         try:
@@ -64,13 +41,6 @@ class data_graph:
             return all([result.scheme, result.netloc])
         except Exception:
             return False
-
-    def gen_shape_labels(self, URI):
-        if "#" in URI:
-            label = URI.split("#")[-1]
-        else:
-            label = URI.split("/")[-1]
-        return label + "_"
 
     def extract_classes(self):
         types_query = "select distinct ?class_ { ?s rdf:type ?class_ }"
@@ -130,17 +100,10 @@ class data_graph:
                         self.PROPS[prop]["datatype"] = datatypes[0]
 
     def gen_graph(self, namespace=None, implicit_class_target=False):
-        self.gen_prefix_bindings()
         self.extract_classes()
         self.extract_props()
         self.extract_constraints()
-        ng = rdflib.Graph()
-
-        SH = Namespace("http://www.w3.org/ns/shacl#")
-        ng.bind("sh", SH)
-
-        for x in self.namespaces:
-            ng.bind(x[0], x[1])
+        ng = rdflib.Graph(namespace_manager=self.namespaces)
 
         if namespace is not None:
             if self.uri_validator(namespace[0]):
@@ -167,7 +130,7 @@ class data_graph:
 
             ng.add((EX[self.PROPS[p]["label"]], RDF.type, SH.PropertyShape))
             ng.add((EX[self.PROPS[p]["label"]], SH.path, p))
-            #
+
             for class_prop in self.PROPS[p]["classes"]:
                 ng.add((EX[class_prop], SH.property, EX[self.PROPS[p]["label"]]))
             if self.PROPS[p]["nodekind"] == "IRI":
