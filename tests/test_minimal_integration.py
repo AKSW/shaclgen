@@ -336,13 +336,9 @@ def test_property_loop():
             sh:targetClass <urn:test:Class> .
 
         ?property a sh:PropertyShape ;
-            sh:class <urn:test:OtherClass> ;
+            sh:class <urn:test:Class> ;
             sh:nodeKind sh:IRI ;
             sh:path <urn:test:obj_property> .
-
-        ?nodeShapeB a sh:NodeShape ;
-            sh:nodeKind sh:BlankNodeOrIRI ;
-            sh:targetClass <urn:test:OtherClass> .
     }
     """,
     )
