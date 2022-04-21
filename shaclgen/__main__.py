@@ -3,10 +3,10 @@ from .shaclgen import data_graph
 from .schema import schema
 
 import click
-from sys import stdout
+from sys import stdout, stderr
 from rdflib import Graph
 from rdflib.util import guess_format
-
+from loguru import logger
 
 @click.command()
 @click.argument("graphs", nargs=-1, type=str)
@@ -50,7 +50,22 @@ from rdflib.util import guess_format
     help="use implicit class targets with RDFS",
     default=False,
 )
-def main(graphs, ontology, output, serial, prefixes, namespace, implicit_class_target):
+@click.option(
+    "--logfile",
+    help="Specify a logfile",
+    default=None,
+)
+@click.option(
+    "--loglevel",
+    help="Specify the standard output loglevel",
+    default="INFO",
+)
+@click.option(
+    "--logfilelevel",
+    help="Specify the loglevel for the logfile",
+    default="DEBUG",
+)
+def main(graphs, ontology, output, serial, prefixes, namespace, implicit_class_target, logfile, loglevel, logfilelevel):
     """
     ---------------------------Shaclgen---------------------------
 
@@ -87,6 +102,11 @@ def main(graphs, ontology, output, serial, prefixes, namespace, implicit_class_t
         n3 = n3
 
     """
+
+    logger.remove()
+    logger.add(stderr, level=loglevel)
+    if logfile:
+        logger.add(logfile, level=logfilelevel)
 
     source_graph = Graph()
 

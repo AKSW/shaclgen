@@ -1,3 +1,4 @@
+from loguru import logger
 from rdflib import Namespace, URIRef, BNode, Literal, Graph
 import rdflib
 import json
@@ -45,6 +46,7 @@ class data_graph:
     def extract_classes(self):
         types_query = "select distinct ?class_ { ?s rdf:type ?class_ }"
         for row in self.G.query(types_query, initNs={"rdf": RDF}):
+            logger.debug(f"Class: {row.class_}")
             self.CLASSES[row.class_] = {"label": self.sh_label_gen(row.class_)}
 
     def extract_props(self):
@@ -52,6 +54,7 @@ class data_graph:
         prop_subj_classes = "select distinct ?class_ {{ ?sub {prop} ?o ; a ?class_ . }}"
         for property_row in self.G.query(prop_query, initNs={"rdf": RDF}):
             prop = property_row.prop
+            logger.debug(f"Property: {prop}")
             self.PROPS[prop] = {
                 "nodekind": None,
                 "cardinality": None,
@@ -70,6 +73,7 @@ class data_graph:
     def extract_constraints(self):
 
         for prop in self.PROPS.keys():
+            logger.debug(f"Constraints for Property: {prop}")
             types = []
             classes = []
             datatypes = []
@@ -100,9 +104,14 @@ class data_graph:
                         self.PROPS[prop]["datatype"] = datatypes[0]
 
     def gen_graph(self, namespace=None, implicit_class_target=False):
+        logger.info("Start Extraction")
+        logger.info("Classes …")
         self.extract_classes()
+        logger.info("Properties …")
         self.extract_props()
+        logger.info("Constraints …")
         self.extract_constraints()
+        logger.info("Write resulting SHACL Graph …")
         ng = rdflib.Graph(namespace_manager=self.namespaces)
 
         if namespace is not None:
