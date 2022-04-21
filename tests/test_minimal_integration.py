@@ -307,3 +307,42 @@ def test_object_blank_node():
     }
     """,
     )
+
+
+def test_property_loop():
+    source_graph = Graph()
+
+    data = """
+    <urn:test:resource> a <urn:test:Class> ;
+        <urn:test:obj_property> <urn:test:other_resource> .
+    <urn:test:other_resource> a <urn:test:Class> ;
+        <urn:test:obj_property> <urn:test:other_resource> .
+    """
+
+    source_graph.parse(data=data, format="turtle")
+
+    extraction_graph = data_graph(source_graph)
+    shacl_graph = extraction_graph.gen_graph()
+
+    assertAskQuery(
+        shacl_graph,
+        """
+    prefix sh: <http://www.w3.org/ns/shacl#>
+    prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+    ask {
+        ?nodeShapeA a sh:NodeShape ;
+            sh:nodeKind sh:BlankNodeOrIRI ;
+            sh:property ?property ;
+            sh:targetClass <urn:test:Class> .
+
+        ?property a sh:PropertyShape ;
+            sh:class <urn:test:OtherClass> ;
+            sh:nodeKind sh:IRI ;
+            sh:path <urn:test:obj_property> .
+
+        ?nodeShapeB a sh:NodeShape ;
+            sh:nodeKind sh:BlankNodeOrIRI ;
+            sh:targetClass <urn:test:OtherClass> .
+    }
+    """,
+    )
