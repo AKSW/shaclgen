@@ -8,6 +8,7 @@ from rdflib import Graph
 from rdflib.util import guess_format
 from loguru import logger
 
+
 @click.command()
 @click.argument("graphs", nargs=-1, type=str)
 @click.option(
@@ -65,7 +66,18 @@ from loguru import logger
     help="Specify the loglevel for the logfile",
     default="DEBUG",
 )
-def main(graphs, ontology, output, serial, prefixes, namespace, implicit_class_target, logfile, loglevel, logfilelevel):
+def main(
+    graphs,
+    ontology,
+    output,
+    serial,
+    prefixes,
+    namespace,
+    implicit_class_target,
+    logfile,
+    loglevel,
+    logfilelevel,
+):
     """
     ---------------------------Shaclgen---------------------------
 
