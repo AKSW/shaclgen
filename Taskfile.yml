@@ -3,24 +3,19 @@ version: '3'
 tasks:
 
   install_dependencies:
-    cmds:
-      - pip install poetry
+    - pip install poetry
 
   install:
-    cmds:
-      - poetry install
+    - poetry install
 
   code_formating:
-    cmds:
-      - poetry run black shaclgen tests
+    - poetry run black shaclgen tests
 
   code_formating_check:
-    cmds:
-      - poetry run black --check shaclgen tests
+    - poetry run black --check shaclgen tests
 
   test:
-    cmds:
-      - poetry run pytest -rP --cov=shaclgen --cov-report=term-missing
+    - poetry run pytest -rP --cov=shaclgen --cov-report=term-missing
 
   ci:
     cmds:
@@ -28,3 +23,11 @@ tasks:
       - task: install
       - task: test
       - task: code_formating_check
+
+# Aliases
+#
+# Should be new syntax onece v4 is out:
+# https://github.com/go-task/task/issues/675
+
+  black:
+    - task: code_formating
