@@ -89,7 +89,7 @@ class data_graph:
                         classes.append(objectClass)
                 elif nodeType == Literal:
                     datatypes.append(
-                        o.datatype or (XSD.langString if o.language else XSD.string)
+                        o.datatype or (RDF.langString if o.language else XSD.string)
                     )
 
             if len(set(types)) == 1:
