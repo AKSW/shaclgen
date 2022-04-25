@@ -8,12 +8,13 @@ def test_object_class():
 
     data = """
     <urn:test:resource> a <urn:test:Class> ;
-        <urn:test:obj_property> <urn:test:other_resource> ;
+        <urn:test:obj_property_iri> <urn:test:other_resource> ;
+        <urn:test:obj_property_bnode> [a <urn:test:OtherClassC>] ;
         <urn:test:data_property_int> 4 ;
         <urn:test:data_property_bool> true ;
         <urn:test:data_property_str> "Literal" ;
         <urn:test:data_property_langstr> "Literal"@en .
-    <urn:test:other_resource> a <urn:test:OtherClass> .
+    <urn:test:other_resource> a <urn:test:OtherClassB> .
     """
 
     source_graph.parse(data=data, format="turtle")
@@ -29,13 +30,18 @@ def test_object_class():
     ask {
         ?nodeShapeA a sh:NodeShape ;
             sh:nodeKind sh:BlankNodeOrIRI ;
-            sh:property ?obj_property, ?data_property_dt, ?data_property_langstr, ?data_property_str ;
+            sh:property ?obj_property_iri, ?obj_property_bnode, ?data_property_dt, ?data_property_langstr, ?data_property_str ;
             sh:targetClass <urn:test:Class> .
 
-        ?obj_property a sh:PropertyShape ;
-            sh:class <urn:test:OtherClass> ;
+        ?obj_property_iri a sh:PropertyShape ;
+            sh:class <urn:test:OtherClassB> ;
             sh:nodeKind sh:IRI ;
-            sh:path <urn:test:obj_property> .
+            sh:path <urn:test:obj_property_iri> .
+
+        ?obj_property_bnode a sh:PropertyShape ;
+            #sh:class <urn:test:OtherClassC> ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <urn:test:obj_property_bnode> .
 
         ?data_property_int a sh:PropertyShape ;
             sh:datatype xsd:integer ;
@@ -59,7 +65,11 @@ def test_object_class():
 
         ?nodeShapeB a sh:NodeShape ;
             sh:nodeKind sh:BlankNodeOrIRI ;
-            sh:targetClass <urn:test:OtherClass> .
+            sh:targetClass <urn:test:OtherClassB> .
+
+        ?nodeShapeC a sh:NodeShape ;
+            sh:nodeKind sh:BlankNodeOrIRI ;
+            sh:targetClass <urn:test:OtherClassC> .
     }
     """,
     )
