@@ -51,16 +51,6 @@ class data_graph:
 
     def extract_props(self):
         prop_query = "select distinct ?prop { ?s ?prop ?o . filter(?prop != rdf:type && ?prop != rdfs:label)}"
-        prop_subject_type = "select distinct ?class_ {{ ?sub {prop} ?o ; a ?class_ . }}"
-        prop_object_type = """
-            select distinct ?literal ?dt ?blank ?iri ?class_ {{
-                ?s {prop} ?obj .
-                optional {{ ?obj a ?class_ }}
-                bind(isLiteral(?obj) as ?literal)
-                bind(datatype(?obj) as ?dt)
-                bind(isBlank(?obj) as ?blank)
-                bind(isIRI(?obj) as ?iri)
-            }}"""
         for property_row in self.G.query(prop_query, initNs={"rdf": RDF, "rdfs": RDFS}):
             prop = property_row.prop
             logger.debug(f"Property: {prop}")
@@ -71,57 +61,76 @@ class data_graph:
                 "exceptions": [],
                 "label": self.sh_label_gen(prop),
             }
-            try:
-                class_property_result = self.G.query(
-                    prop_subject_type.format(prop=prop.n3())
-                )
-                for class_row in class_property_result:
-                    class_ = class_row.class_
-                    self.PROPS[prop]["classes"].append(self.CLASSES[class_]["label"])
-            except Exception as e:
-                logger.error(e)
-                self.PROPS[prop]["exceptions"].append(
-                    {"exception": e, "query": prop_subject_type.format(prop=prop.n3())}
-                )
+
+            self.extract_props_subj_types(prop)
 
             if len(self.PROPS[prop]["classes"]) == 1:
                 self.PROPS[prop]["type"] = "unique"
             else:
                 self.PROPS[prop]["type"] = "repeat"
 
-            try:
-                nodekinds = []
-                datatypes = []
-                objectclasses = []
+            self.extract_props_obj_types(prop)
 
-                property_object_result = self.G.query(
-                    prop_object_type.format(prop=prop.n3())
-                )
-                for object_type_row in property_object_result:
-                    if object_type_row.literal:
-                        nodekinds.append("Literal")
-                        datatypes.append(object_type_row.dt)
-                    elif object_type_row.blank:
-                        nodekinds.append("BNode")
-                    elif object_type_row.iri:
-                        nodekinds.append("IRI")
+    def extract_props_subj_types(self, prop):
+        prop_subject_type = "select distinct ?class_ {{ ?sub {prop} ?o ; a ?class_ . }}"
 
-                    if object_type_row.blank or object_type_row.iri:
-                        if object_type_row.class_:
-                            objectclasses.append(object_type_row.class_)
+        try:
+            class_property_result = self.G.query(
+                prop_subject_type.format(prop=prop.n3())
+            )
+            for class_row in class_property_result:
+                class_ = class_row.class_
+                self.PROPS[prop]["classes"].append(self.CLASSES[class_]["label"])
+        except Exception as e:
+            logger.error(e)
+            self.PROPS[prop]["exceptions"].append(
+                {"exception": e, "query": prop_subject_type.format(prop=prop.n3())}
+            )
 
-                if len(set(nodekinds)) == 1:
-                    self.PROPS[prop]["nodekind"] = nodekinds[0]
-                    if nodekinds[0] == "Literal":
-                        if len(set(datatypes)) == 1:
-                            self.PROPS[prop]["datatype"] = datatypes[0]
-                    elif nodekinds[0] in ("IRI", "BNode"):
-                        self.PROPS[prop]["objectclasses"] = objectclasses
-            except Exception as e:
-                logger.error(e)
-                self.PROPS[prop]["exceptions"].append(
-                    {"exception": e, "query": prop_object_type.format(prop=prop.n3())}
-                )
+    def extract_props_obj_types(self, prop):
+        prop_object_type = """
+            select distinct ?literal ?dt ?blank ?iri ?class_ {{
+                ?s {prop} ?obj .
+                optional {{ ?obj a ?class_ }}
+                bind(isLiteral(?obj) as ?literal)
+                bind(datatype(?obj) as ?dt)
+                bind(isBlank(?obj) as ?blank)
+                bind(isIRI(?obj) as ?iri)
+            }}"""
+
+        try:
+            nodekinds = []
+            datatypes = []
+            objectclasses = []
+
+            property_object_result = self.G.query(
+                prop_object_type.format(prop=prop.n3())
+            )
+            for object_type_row in property_object_result:
+                if object_type_row.literal:
+                    nodekinds.append("Literal")
+                    datatypes.append(object_type_row.dt)
+                elif object_type_row.blank:
+                    nodekinds.append("BNode")
+                elif object_type_row.iri:
+                    nodekinds.append("IRI")
+
+                if object_type_row.blank or object_type_row.iri:
+                    if object_type_row.class_:
+                        objectclasses.append(object_type_row.class_)
+
+            if len(set(nodekinds)) == 1:
+                self.PROPS[prop]["nodekind"] = nodekinds[0]
+                if nodekinds[0] == "Literal":
+                    if len(set(datatypes)) == 1:
+                        self.PROPS[prop]["datatype"] = datatypes[0]
+                elif nodekinds[0] in ("IRI", "BNode"):
+                    self.PROPS[prop]["objectclasses"] = objectclasses
+        except Exception as e:
+            logger.error(e)
+            self.PROPS[prop]["exceptions"].append(
+                {"exception": e, "query": prop_object_type.format(prop=prop.n3())}
+            )
 
     def gen_graph(self, namespace=None, implicit_class_target=False):
         logger.info("Start Extraction")
