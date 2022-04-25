@@ -3,7 +3,7 @@ from rdflib import Namespace, URIRef, BNode, Literal, Graph
 import rdflib
 import json
 import collections
-from rdflib.namespace import XSD, RDF, SH
+from rdflib.namespace import XSD, RDF, RDFS, SH
 from rdflib.namespace import NamespaceManager
 from urllib.parse import urlparse
 import pkg_resources
