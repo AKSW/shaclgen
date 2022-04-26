@@ -1,7 +1,6 @@
 from loguru import logger
 from rdflib import Namespace, URIRef, BNode, Literal, Graph
 import rdflib
-import json
 import collections
 from rdflib.namespace import XSD, RDF, RDFS, SH
 from rdflib.namespace import NamespaceManager
@@ -10,27 +9,18 @@ import pkg_resources
 
 
 class data_graph:
-    def __init__(self, graph: Graph, prefixes=None):
+    def __init__(self, graph: Graph, namespaces=None):
         self.G = graph
 
         self.CLASSES = collections.OrderedDict()
         self.PROPS = collections.OrderedDict()
         self.OUT = []
 
-        path = "prefixes/namespaces.json"
-        filepath = pkg_resources.resource_filename(__name__, path)
-
-        self.namespaces = NamespaceManager(graph=Graph())
+        if namespaces:
+            self.namespaces = namespaces
+        else:
+            self.namespaces = NamespaceManager(graph=Graph())
         self.namespaces.bind("sh", SH)
-
-        with open(filepath, "r", encoding="utf-8") as fin:
-            for prefix, namespace in json.load(fin).items():
-                self.namespaces.bind(prefix, namespace)
-
-        if prefixes:
-            with open(prefixes, "r", encoding="utf-8") as fin:
-                for prefix, namespace in json.load(fin).items():
-                    self.namespaces.bind(prefix, namespace)
 
     def sh_label_gen(self, uri):
         prefix, namespace, name = self.namespaces.compute_qname(uri)
