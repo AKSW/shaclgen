@@ -50,7 +50,7 @@ class data_graph:
             self.CLASSES[row.class_] = {"label": self.sh_label_gen(row.class_)}
 
     def extract_props(self):
-        prop_query = "select distinct ?prop { ?s ?prop ?o . filter(?prop != rdf:type && ?prop != rdfs:label)}"
+        prop_query = "select distinct ?prop { ?s ?prop ?o . filter(?prop != rdf:type)}"
         for property_row in self.G.query(prop_query, initNs={"rdf": RDF, "rdfs": RDFS}):
             prop = property_row.prop
             logger.debug(f"Property: {prop}")
