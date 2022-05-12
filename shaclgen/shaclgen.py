@@ -1,11 +1,12 @@
 from loguru import logger
-from rdflib import Namespace, URIRef, BNode, Literal, Graph
+from rdflib import Namespace, Literal, Graph
 import rdflib
 import collections
-from rdflib.namespace import XSD, RDF, RDFS, SH
+from rdflib.namespace import RDF, RDFS, SH
 from rdflib.namespace import NamespaceManager
 from urllib.parse import urlparse
-import pkg_resources
+
+SHGEN = Namespace("http://shaclgen/")
 
 
 class data_graph:
@@ -21,6 +22,7 @@ class data_graph:
         else:
             self.namespaces = NamespaceManager(graph=Graph())
         self.namespaces.bind("sh", SH)
+        self.namespaces.bind("shgen", SHGEN)
 
     def sh_label_gen(self, uri):
         prefix, namespace, name = self.namespaces.compute_qname(uri)
@@ -62,6 +64,7 @@ class data_graph:
             self.extract_props_obj_types(prop)
 
     def extract_props_subj_types(self, prop):
+        logger.debug(f"Property subject types: {prop}")
         prop_subject_type = "select distinct ?class_ {{ ?sub {prop} ?o ; a ?class_ . }}"
 
         try:
@@ -78,6 +81,7 @@ class data_graph:
             )
 
     def extract_props_obj_types(self, prop):
+        logger.debug(f"Property object types: {prop}")
         prop_object_type = """
             select distinct ?literal ?dt ?blank ?iri ?class_ {{
                 ?s {prop} ?obj .
