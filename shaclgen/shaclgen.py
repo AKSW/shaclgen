@@ -161,6 +161,22 @@ class data_graph:
             ng.add((EX[self.PROPS[p]["label"]], RDF.type, SH.PropertyShape))
             ng.add((EX[self.PROPS[p]["label"]], SH.path, p))
 
+            for exception in self.PROPS[p]["exceptions"]:
+                ng.add(
+                    (
+                        EX[self.PROPS[p]["label"]],
+                        SHGEN.exception,
+                        Literal(str(exception["exception"])),
+                    )
+                )
+                ng.add(
+                    (
+                        EX[self.PROPS[p]["label"]],
+                        SHGEN.query,
+                        Literal(str(exception["query"])),
+                    )
+                )
+
             for class_prop in self.PROPS[p]["classes"]:
                 ng.add((EX[class_prop], SH.property, EX[self.PROPS[p]["label"]]))
             if self.PROPS[p]["nodekind"] == "IRI":
