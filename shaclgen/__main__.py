@@ -17,6 +17,7 @@ import pkg_resources
 @click.option(
     "-o",
     "--ontology",
+    is_flag=True,
     help="input file(s) or URL(s) is a schema or ontology",
     default=False,
 )
