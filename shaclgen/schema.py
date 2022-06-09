@@ -105,16 +105,6 @@ class schema:
         for types in property_types:
             for s, p, o in self.G.triples((None, RDF.type, types)):
                 properties.append(s)
-        #
-        #        for s,p,o in self.G.triples((None,RDF.type,OWL.ObjectProperty)):
-        #            properties.append(s)
-        #        for s,p,o in self.G.triples((None,RDF.type,OWL.AnnotationProperty)):
-        #            properties.append(s)
-        #        for s,p,o in self.G.triples((None,RDF.type,OWL.TransitiveProperty)):
-        #            properties.append(s)
-        #
-        #        for s,p,o in self.G.triples((None,RDF.type,RDF.Property)):
-        #            properties.append(s)
 
         for p in sorted(properties):
             self.PROPS[p] = {}
@@ -135,10 +125,6 @@ class schema:
             self.PROPS[prop]["shape_name"] = None
             self.PROPS[prop]["definition"] = None
             self.PROPS[prop]["type"] = []
-
-            #            for domain in self.G.objects(subject=s, predicate=RDFS.domain):
-            #                if type(domain) != BNode:
-            #                    self.PROPS[prop]['domain'] = domain
 
             for obje in self.G.objects(subject=prop, predicate=RDF.type):
                 self.PROPS[prop]["type"].append(obje)
@@ -285,7 +271,7 @@ class schema:
             EX = Namespace("http://www.example.org/")
             ng.bind("ex", EX)
 
-        #         add class Node Shapes
+        # add class Node Shapes
         for c in self.CLASSES.keys():
             subject = c
             clabel = self.CLASSES[c]["label"]
@@ -300,7 +286,7 @@ class schema:
                     ng.add(t)
 
             ng.add((subject, RDF.type, SH.NodeShape))
-            #            ng.add((EX[clabel], SH.name, Literal(self.CLASSES[c]['shape_name']+' Node shape')))
+            # ng.add((EX[clabel], SH.name, Literal(self.CLASSES[c]['shape_name']+' Node shape')))
             ng.add((subject, SH.nodeKind, SH.BlankNodeOrIRI))
             if self.CLASSES[c]["definition"] is not None:
                 ng.add(
@@ -309,7 +295,7 @@ class schema:
 
         for p in self.PROPS.keys():
             label = self.PROPS[p]["label"]
-            #            ng.add((EX[label], SH.name, Literal(str(self.PROPS[p]['shape_name']) +' Property shape')))
+            # ng.add((EX[label], SH.name, Literal(str(self.PROPS[p]['shape_name']) +' Property shape')))
             # copy rdfs:label as property shape names
             for o in self.G.objects(subject=p, predicate=RDFS.label):
                 ng.add((EX[label], SH.name, o))
@@ -343,7 +329,7 @@ class schema:
                 for x in self.PROPS[p]["e_prop"]:
                     ng.add((EX[label], SH.equals, x))
 
-            ## create range unions using sh:or
+            # create range unions using sh:or
             if self.PROPS[p]["range_union"] is not None:
                 rang = self.PROPS[p]["range_union"]
                 if set(rang).issubset(self.datatypes):
@@ -418,7 +404,7 @@ class schema:
             if self.PROPS[p]["domain"] is not None:
                 subject = self.PROPS[p]["domain"]
                 if subject in self.CLASSES.keys():
-                    plabel = self.PROPS[p]["label"]  #
+                    plabel = self.PROPS[p]["label"]
                     if implicit_class_target:
                         ng.add((subject, SH.property, EX[plabel]))
                     else:
@@ -428,7 +414,7 @@ class schema:
             if self.PROPS[p]["domain_union"] is not None:
                 for d in self.PROPS[p]["domain_union"]:
                     if d in self.CLASSES.keys():
-                        plabel = self.PROPS[p]["label"]  #
+                        plabel = self.PROPS[p]["label"]
 
                         if implicit_class_target:
                             ng.add((d, SH.property, EX[plabel]))
@@ -439,7 +425,7 @@ class schema:
         for r in self.REST.keys():
             blank = BNode()
 
-            #                if self.REST[r]['onProp'] == p: #and self.REST[r]['onClass'] == self.PROPS[p]['domain']:
+            # if self.REST[r]['onProp'] == p: #and self.REST[r]['onClass'] == self.PROPS[p]['domain']:
 
             ng.add((EX[self.sh_label_gen(self.REST[r]["onClass"])], SH.property, blank))
             ng.add((blank, SH.path, self.REST[r]["onProp"]))
@@ -537,8 +523,6 @@ class schema:
                                             BNode(dummy + str(x + 1) + "a"),
                                         )
                                     )
-                #
-                #
                 elif type(self.REST[r]["value"]) in self.datatypes:
                     ng.add((blank, SH["datatype"], self.REST[r]["value"]))
                 else:
