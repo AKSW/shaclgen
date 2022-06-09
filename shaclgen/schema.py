@@ -4,9 +4,9 @@ from rdflib.namespace import NamespaceManager
 from rdflib.term import URIRef, Literal, BNode
 import collections
 import json
-from urllib.parse import urlparse
 from rdflib.collection import Collection
 import pkg_resources
+from .generator import Generator
 
 """
 current assumptions:
@@ -16,7 +16,7 @@ current assumptions:
 """
 
 
-class schema:
+class schema(Generator):
     def __init__(self, graph: Graph, prefixes=None):
         self.G = graph
 
@@ -54,43 +54,6 @@ class schema:
                 for prefix, namespace in json.load(fin).items():
                     self.namespaces.bind(prefix, namespace)
 
-    def parse_uri(self, URI):
-        if "#" in URI:
-            label = URI.split("#")[-1]
-        else:
-            label = URI.split("/")[-1]
-        return str(label)
-
-    def gen_prefix_bindings(self):
-        count = 0
-        subs = []
-        for s, p, o in self.G.triples((None, RDF.type, None)):
-            if type(s) != BNode:
-                subs.append(s)
-
-        for pred in subs:
-            if pred.replace(self.parse_uri(pred), "") not in self.names.values():
-                count = count + 1
-                self.names["ns" + str(count)] = pred.replace(self.parse_uri(pred), "")
-        subs = list(set(subs))
-        for pref, uri in self.names.items():
-            for s in subs:
-                if uri == s.replace(self.parse_uri(s), ""):
-                    self.namespaces.append((pref, uri))
-        self.namespaces = list(set(self.namespaces))
-
-    def sh_label_gen(self, uri):
-        parsed = uri.replace(self.parse_uri(uri), "")
-        for cur, pref in self.names.items():
-            if pref == parsed:
-                return cur + "_" + self.parse_uri(uri)
-
-    def uri_validator(self, x):
-        try:
-            result = urlparse(x)
-            return all([result.scheme, result.netloc])
-        except Exception:
-            return False
 
     def extract_props(self):
         properties = []
@@ -168,7 +131,6 @@ class schema:
                     self.PROPS[prop]["shape_name"] = self.sh_label_gen(prop)
 
     def extract_classes(self):
-        self.gen_prefix_bindings()
         classes = []
         for s, p, o in self.G.triples((None, RDF.type, OWL.Class)):
             if type(s) != BNode:
@@ -246,7 +208,6 @@ class schema:
             self.REST[rest]["value"] = rest_val[0]
 
     def gen_graph(self, namespace=None, implicit_class_target=False):
-        self.gen_prefix_bindings()
         self.extract_props()
         self.extract_classes()
         self.extract_restrictions()
