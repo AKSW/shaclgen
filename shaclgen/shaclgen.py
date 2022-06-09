@@ -4,12 +4,12 @@ import rdflib
 import collections
 from rdflib.namespace import RDF, RDFS, SH
 from rdflib.namespace import NamespaceManager
-from urllib.parse import urlparse
+from .generator import Generator
 
 SHGEN = Namespace("http://shaclgen/")
 
 
-class data_graph:
+class data_graph(Generator):
     def __init__(self, graph: Graph, namespaces=None):
         self.G = graph
 
@@ -23,17 +23,6 @@ class data_graph:
             self.namespaces = NamespaceManager(graph=Graph())
         self.namespaces.bind("sh", SH)
         self.namespaces.bind("shgen", SHGEN)
-
-    def sh_label_gen(self, uri):
-        prefix, namespace, name = self.namespaces.compute_qname(uri)
-        return prefix + "_" + name
-
-    def uri_validator(self, x):
-        try:
-            result = urlparse(x)
-            return all([result.scheme, result.netloc])
-        except Exception:
-            return False
 
     def extract_classes(self):
         types_query = "select distinct ?class_ { ?s rdf:type ?class_ }"

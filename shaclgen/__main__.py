@@ -145,7 +145,7 @@ def main(
 
     g = None
     if ontology:
-        g = schema(source_graph, prefixes)
+        g = schema(source_graph, namespaces)
     else:
         g = data_graph(source_graph, namespaces)
     shape_graph = g.gen_graph(
