@@ -1,5 +1,6 @@
 from rdflib import Graph, Namespace
 from rdflib.namespace import XSD, RDF, RDFS, OWL, SH
+from rdflib.namespace import NamespaceManager
 from rdflib.term import URIRef, Literal, BNode
 import collections
 import json
@@ -23,7 +24,6 @@ class schema:
         self.PROPS = collections.OrderedDict()
         self.REST = collections.OrderedDict()
 
-        self.namespaces = []
         self.datatypes = [
             XSD.string,
             XSD.boolean,
@@ -42,12 +42,17 @@ class schema:
         path = "prefixes/namespaces.json"
         filepath = pkg_resources.resource_filename(__name__, path)
 
+        self.namespaces = NamespaceManager(graph=Graph())
+        self.namespaces.bind("sh", SH)
+
         with open(filepath, "r", encoding="utf-8") as fin:
-            self.names = json.load(fin)
+            for prefix, namespace in json.load(fin).items():
+                self.namespaces.bind(prefix, namespace)
 
         if prefixes:
             with open(prefixes, "r", encoding="utf-8") as fin:
-                self.names.update(json.load(fin))
+                for prefix, namespace in json.load(fin).items():
+                    self.namespaces.bind(prefix, namespace)
 
     def parse_uri(self, URI):
         if "#" in URI:
@@ -245,15 +250,7 @@ class schema:
         self.extract_props()
         self.extract_classes()
         self.extract_restrictions()
-        ng = Graph()
-
-        for prefix, namespace in self.G.namespace_manager.namespaces():
-            ng.bind(prefix, namespace)
-
-        ng.bind("sh", SH)
-
-        EX = Namespace("http://www.example.org/")
-        ng.bind("ex", EX)
+        ng = Graph(namespace_manager=self.namespaces)
 
         if namespace is not None:
             if self.uri_validator(namespace[0]):
