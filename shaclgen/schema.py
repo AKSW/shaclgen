@@ -1,5 +1,5 @@
-from rdflib import Graph, RDF, RDFS, OWL, Namespace
-from rdflib.namespace import XSD
+from rdflib import Graph, Namespace
+from rdflib.namespace import XSD, RDF, RDFS, OWL, SH
 from rdflib.term import URIRef, Literal, BNode
 import collections
 import json
@@ -250,7 +250,6 @@ class schema:
         for prefix, namespace in self.G.namespace_manager.namespaces():
             ng.bind(prefix, namespace)
 
-        SH = Namespace("http://www.w3.org/ns/shacl#")
         ng.bind("sh", SH)
 
         EX = Namespace("http://www.example.org/")
