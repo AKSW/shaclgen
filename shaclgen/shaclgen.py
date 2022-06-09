@@ -31,7 +31,6 @@ class data_graph(Generator):
                 for prefix, namespace in json.load(fin).items():
                     self.namespaces.bind(prefix, namespace)
 
-
     def extract_classes(self):
         types_query = "select distinct ?class_ { ?s rdf:type ?class_ }"
         for row in self.G.query(types_query, initNs={"rdf": RDF}):

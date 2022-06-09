@@ -54,7 +54,6 @@ class schema(Generator):
                 for prefix, namespace in json.load(fin).items():
                     self.namespaces.bind(prefix, namespace)
 
-
     def extract_props(self):
         properties = []
         self.PROPS = {}
