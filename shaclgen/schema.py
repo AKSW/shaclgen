@@ -84,7 +84,7 @@ class schema:
         try:
             result = urlparse(x)
             return all([result.scheme, result.netloc])
-        except:
+        except Exception:
             return False
 
     def extract_props(self):
@@ -173,7 +173,7 @@ class schema:
             for name in self.G.objects(subject=s, predicate=RDFS.label):
 
                 self.PROPS[prop]["shape_name"] = name
-                if self.PROPS[prop]["shape_name"] == None:
+                if self.PROPS[prop]["shape_name"] is None:
                     self.PROPS[prop]["shape_name"] = self.sh_label_gen(prop)
 
     def extract_classes(self):
@@ -198,7 +198,7 @@ class schema:
             s = URIRef(c)
             for name in self.G.objects(subject=s, predicate=RDFS.label):
                 self.CLASSES[c]["shape_name"] = name
-                if self.CLASSES[c]["shape_name"] == None:
+                if self.CLASSES[c]["shape_name"] is None:
                     self.CLASSES[c]["shape_name"] = self.sh_label_gen(c)
             for defin in self.G.objects(subject=s, predicate=RDFS.comment):
                 self.CLASSES[c]["definition"] = defin
@@ -270,8 +270,8 @@ class schema:
         EX = Namespace("http://www.example.org/")
         ng.bind("ex", EX)
 
-        if namespace != None:
-            if self.uri_validator(namespace[0]) != False:
+        if namespace is not None:
+            if self.uri_validator(namespace[0]):
                 uri = namespace[0]
                 if namespace[0][-1] not in ["#", "/", "\\"]:
                     uri = namespace[0] + "/"
@@ -346,7 +346,7 @@ class schema:
             ## create range unions using sh:or
             if self.PROPS[p]["range_union"] is not None:
                 rang = self.PROPS[p]["range_union"]
-                if set(rang).issubset(self.datatypes) == True:
+                if set(rang).issubset(self.datatypes):
 
                     st = BNode(label + str(0) + "a")
                     ng.add((EX[label], EX["or"], st))
