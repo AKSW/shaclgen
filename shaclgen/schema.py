@@ -1,3 +1,4 @@
+from loguru import logger
 from rdflib import Graph, Namespace
 from rdflib.namespace import XSD, RDF, RDFS, OWL, SH
 from rdflib.namespace import NamespaceManager
@@ -196,9 +197,13 @@ class schema(Generator):
             self.REST[rest]["value"] = rest_val[0]
 
     def gen_graph(self, namespace=None, implicit_class_target=False):
+        logger.info("Start Extraction of the Ontology")
+        logger.info("Properties …")
         self.extract_props()
+        logger.info("Classes …")
         self.extract_classes()
         self.extract_restrictions()
+        logger.info("Write resulting SHACL Graph …")
         ng = Graph(namespace_manager=self.namespaces)
 
         if namespace is not None:

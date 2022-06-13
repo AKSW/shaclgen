@@ -116,7 +116,7 @@ class data_graph(Generator):
             )
 
     def gen_graph(self, namespace=None, implicit_class_target=False):
-        logger.info("Start Extraction")
+        logger.info("Start Extraction of the Data Graph")
         logger.info("Classes …")
         self.extract_classes()
         logger.info("Properties …")
