@@ -135,13 +135,13 @@ def main(
     namespaces = NamespaceManager(graph=Graph())
 
     with open(filepath, "r", encoding="utf-8") as fin:
-        for prefix, namespace in json.load(fin).items():
-            namespaces.bind(prefix, namespace)
+        for prefix, namespace_iri in json.load(fin).items():
+            namespaces.bind(prefix, namespace_iri)
 
     if prefixes:
         with open(prefixes, "r", encoding="utf-8") as fin:
-            for prefix, namespace in json.load(fin).items():
-                namespaces.bind(prefix, namespace)
+            for prefix, namespace_iri in json.load(fin).items():
+                namespaces.bind(prefix, namespace_iri)
 
     g = None
     if ontology:
