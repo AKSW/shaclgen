@@ -3,9 +3,7 @@ from rdflib.namespace import XSD, RDF, RDFS, OWL, SH
 from rdflib.namespace import NamespaceManager
 from rdflib.term import URIRef, Literal, BNode
 import collections
-import json
 from rdflib.collection import Collection
-import pkg_resources
 from .generator import Generator
 
 """
