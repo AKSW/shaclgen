@@ -4,11 +4,11 @@ import json
 import collections
 from rdflib.namespace import XSD, RDF, SH
 from rdflib.namespace import NamespaceManager
-from urllib.parse import urlparse
 import pkg_resources
+from .generator import Generator
 
 
-class data_graph:
+class data_graph(Generator):
     def __init__(self, graph: Graph, prefixes=None):
         self.G = graph
 
@@ -30,17 +30,6 @@ class data_graph:
             with open(prefixes, "r", encoding="utf-8") as fin:
                 for prefix, namespace in json.load(fin).items():
                     self.namespaces.bind(prefix, namespace)
-
-    def sh_label_gen(self, uri):
-        prefix, namespace, name = self.namespaces.compute_qname(uri)
-        return prefix + "_" + name
-
-    def uri_validator(self, x):
-        try:
-            result = urlparse(x)
-            return all([result.scheme, result.netloc])
-        except Exception:
-            return False
 
     def extract_classes(self):
         types_query = "select distinct ?class_ { ?s rdf:type ?class_ }"

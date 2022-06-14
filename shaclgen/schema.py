@@ -1,11 +1,12 @@
-from rdflib import Graph, RDF, RDFS, OWL, Namespace
-from rdflib.namespace import XSD
+from rdflib import Graph, Namespace
+from rdflib.namespace import XSD, RDF, RDFS, OWL, SH
+from rdflib.namespace import NamespaceManager
 from rdflib.term import URIRef, Literal, BNode
 import collections
 import json
-from urllib.parse import urlparse
 from rdflib.collection import Collection
 import pkg_resources
+from .generator import Generator
 
 """
 current assumptions:
@@ -15,7 +16,7 @@ current assumptions:
 """
 
 
-class schema:
+class schema(Generator):
     def __init__(self, graph: Graph, prefixes=None):
         self.G = graph
 
@@ -23,7 +24,6 @@ class schema:
         self.PROPS = collections.OrderedDict()
         self.REST = collections.OrderedDict()
 
-        self.namespaces = []
         self.datatypes = [
             XSD.string,
             XSD.boolean,
@@ -42,50 +42,17 @@ class schema:
         path = "prefixes/namespaces.json"
         filepath = pkg_resources.resource_filename(__name__, path)
 
+        self.namespaces = NamespaceManager(graph=Graph())
+        self.namespaces.bind("sh", SH)
+
         with open(filepath, "r", encoding="utf-8") as fin:
-            self.names = json.load(fin)
+            for prefix, namespace in json.load(fin).items():
+                self.namespaces.bind(prefix, namespace)
 
         if prefixes:
             with open(prefixes, "r", encoding="utf-8") as fin:
-                self.names.update(json.load(fin))
-
-    def parse_uri(self, URI):
-        if "#" in URI:
-            label = URI.split("#")[-1]
-        else:
-            label = URI.split("/")[-1]
-        return str(label)
-
-    def gen_prefix_bindings(self):
-        count = 0
-        subs = []
-        for s, p, o in self.G.triples((None, RDF.type, None)):
-            if type(s) != BNode:
-                subs.append(s)
-
-        for pred in subs:
-            if pred.replace(self.parse_uri(pred), "") not in self.names.values():
-                count = count + 1
-                self.names["ns" + str(count)] = pred.replace(self.parse_uri(pred), "")
-        subs = list(set(subs))
-        for pref, uri in self.names.items():
-            for s in subs:
-                if uri == s.replace(self.parse_uri(s), ""):
-                    self.namespaces.append((pref, uri))
-        self.namespaces = list(set(self.namespaces))
-
-    def sh_label_gen(self, uri):
-        parsed = uri.replace(self.parse_uri(uri), "")
-        for cur, pref in self.names.items():
-            if pref == parsed:
-                return cur + "_" + self.parse_uri(uri)
-
-    def uri_validator(self, x):
-        try:
-            result = urlparse(x)
-            return all([result.scheme, result.netloc])
-        except:
-            return False
+                for prefix, namespace in json.load(fin).items():
+                    self.namespaces.bind(prefix, namespace)
 
     def extract_props(self):
         properties = []
@@ -105,16 +72,6 @@ class schema:
         for types in property_types:
             for s, p, o in self.G.triples((None, RDF.type, types)):
                 properties.append(s)
-        #
-        #        for s,p,o in self.G.triples((None,RDF.type,OWL.ObjectProperty)):
-        #            properties.append(s)
-        #        for s,p,o in self.G.triples((None,RDF.type,OWL.AnnotationProperty)):
-        #            properties.append(s)
-        #        for s,p,o in self.G.triples((None,RDF.type,OWL.TransitiveProperty)):
-        #            properties.append(s)
-        #
-        #        for s,p,o in self.G.triples((None,RDF.type,RDF.Property)):
-        #            properties.append(s)
 
         for p in sorted(properties):
             self.PROPS[p] = {}
@@ -135,10 +92,6 @@ class schema:
             self.PROPS[prop]["shape_name"] = None
             self.PROPS[prop]["definition"] = None
             self.PROPS[prop]["type"] = []
-
-            #            for domain in self.G.objects(subject=s, predicate=RDFS.domain):
-            #                if type(domain) != BNode:
-            #                    self.PROPS[prop]['domain'] = domain
 
             for obje in self.G.objects(subject=prop, predicate=RDF.type):
                 self.PROPS[prop]["type"].append(obje)
@@ -173,11 +126,10 @@ class schema:
             for name in self.G.objects(subject=s, predicate=RDFS.label):
 
                 self.PROPS[prop]["shape_name"] = name
-                if self.PROPS[prop]["shape_name"] == None:
+                if self.PROPS[prop]["shape_name"] is None:
                     self.PROPS[prop]["shape_name"] = self.sh_label_gen(prop)
 
     def extract_classes(self):
-        self.gen_prefix_bindings()
         classes = []
         for s, p, o in self.G.triples((None, RDF.type, OWL.Class)):
             if type(s) != BNode:
@@ -198,7 +150,7 @@ class schema:
             s = URIRef(c)
             for name in self.G.objects(subject=s, predicate=RDFS.label):
                 self.CLASSES[c]["shape_name"] = name
-                if self.CLASSES[c]["shape_name"] == None:
+                if self.CLASSES[c]["shape_name"] is None:
                     self.CLASSES[c]["shape_name"] = self.sh_label_gen(c)
             for defin in self.G.objects(subject=s, predicate=RDFS.comment):
                 self.CLASSES[c]["definition"] = defin
@@ -255,23 +207,13 @@ class schema:
             self.REST[rest]["value"] = rest_val[0]
 
     def gen_graph(self, namespace=None, implicit_class_target=False):
-        self.gen_prefix_bindings()
         self.extract_props()
         self.extract_classes()
         self.extract_restrictions()
-        ng = Graph()
+        ng = Graph(namespace_manager=self.namespaces)
 
-        for prefix, namespace in self.G.namespace_manager.namespaces():
-            ng.bind(prefix, namespace)
-
-        SH = Namespace("http://www.w3.org/ns/shacl#")
-        ng.bind("sh", SH)
-
-        EX = Namespace("http://www.example.org/")
-        ng.bind("ex", EX)
-
-        if namespace != None:
-            if self.uri_validator(namespace[0]) != False:
+        if namespace is not None:
+            if self.uri_validator(namespace[0]):
                 uri = namespace[0]
                 if namespace[0][-1] not in ["#", "/", "\\"]:
                     uri = namespace[0] + "/"
@@ -285,7 +227,7 @@ class schema:
             EX = Namespace("http://www.example.org/")
             ng.bind("ex", EX)
 
-        #         add class Node Shapes
+        # add class Node Shapes
         for c in self.CLASSES.keys():
             subject = c
             clabel = self.CLASSES[c]["label"]
@@ -300,7 +242,7 @@ class schema:
                     ng.add(t)
 
             ng.add((subject, RDF.type, SH.NodeShape))
-            #            ng.add((EX[clabel], SH.name, Literal(self.CLASSES[c]['shape_name']+' Node shape')))
+            # ng.add((EX[clabel], SH.name, Literal(self.CLASSES[c]['shape_name']+' Node shape')))
             ng.add((subject, SH.nodeKind, SH.BlankNodeOrIRI))
             if self.CLASSES[c]["definition"] is not None:
                 ng.add(
@@ -309,7 +251,7 @@ class schema:
 
         for p in self.PROPS.keys():
             label = self.PROPS[p]["label"]
-            #            ng.add((EX[label], SH.name, Literal(str(self.PROPS[p]['shape_name']) +' Property shape')))
+            # ng.add((EX[label], SH.name, Literal(str(self.PROPS[p]['shape_name']) +' Property shape')))
             # copy rdfs:label as property shape names
             for o in self.G.objects(subject=p, predicate=RDFS.label):
                 ng.add((EX[label], SH.name, o))
@@ -343,10 +285,10 @@ class schema:
                 for x in self.PROPS[p]["e_prop"]:
                     ng.add((EX[label], SH.equals, x))
 
-            ## create range unions using sh:or
+            # create range unions using sh:or
             if self.PROPS[p]["range_union"] is not None:
                 rang = self.PROPS[p]["range_union"]
-                if set(rang).issubset(self.datatypes) == True:
+                if set(rang).issubset(self.datatypes):
 
                     st = BNode(label + str(0) + "a")
                     ng.add((EX[label], EX["or"], st))
@@ -418,7 +360,7 @@ class schema:
             if self.PROPS[p]["domain"] is not None:
                 subject = self.PROPS[p]["domain"]
                 if subject in self.CLASSES.keys():
-                    plabel = self.PROPS[p]["label"]  #
+                    plabel = self.PROPS[p]["label"]
                     if implicit_class_target:
                         ng.add((subject, SH.property, EX[plabel]))
                     else:
@@ -428,7 +370,7 @@ class schema:
             if self.PROPS[p]["domain_union"] is not None:
                 for d in self.PROPS[p]["domain_union"]:
                     if d in self.CLASSES.keys():
-                        plabel = self.PROPS[p]["label"]  #
+                        plabel = self.PROPS[p]["label"]
 
                         if implicit_class_target:
                             ng.add((d, SH.property, EX[plabel]))
@@ -439,7 +381,7 @@ class schema:
         for r in self.REST.keys():
             blank = BNode()
 
-            #                if self.REST[r]['onProp'] == p: #and self.REST[r]['onClass'] == self.PROPS[p]['domain']:
+            # if self.REST[r]['onProp'] == p: #and self.REST[r]['onClass'] == self.PROPS[p]['domain']:
 
             ng.add((EX[self.sh_label_gen(self.REST[r]["onClass"])], SH.property, blank))
             ng.add((blank, SH.path, self.REST[r]["onProp"]))
@@ -537,8 +479,6 @@ class schema:
                                             BNode(dummy + str(x + 1) + "a"),
                                         )
                                     )
-                #
-                #
                 elif type(self.REST[r]["value"]) in self.datatypes:
                     ng.add((blank, SH["datatype"], self.REST[r]["value"]))
                 else:
