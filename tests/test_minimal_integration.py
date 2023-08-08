@@ -32,8 +32,8 @@ def test_create_shape_urn():
             sh:datatype xsd:string ;
             sh:nodeKind sh:Literal ;
             sh:path <urn:test:lit_property> .
-            ?ropB a sh:PropertyShape ;
 
+        ?propB a sh:PropertyShape ;
             sh:nodeKind sh:IRI ;
             sh:path <urn:test:obj_property> .
     }
@@ -72,8 +72,8 @@ def test_create_shape_http_iri_hash():
             sh:datatype xsd:string ;
             sh:nodeKind sh:Literal ;
             sh:path <http://example.org/test/vocab#lit_property> .
-            ?ropB a sh:PropertyShape ;
 
+        ?ropB a sh:PropertyShape ;
             sh:nodeKind sh:IRI ;
             sh:path <http://example.org/test/vocab#obj_property> .
     }
@@ -112,8 +112,8 @@ def test_create_shape_http_iri_slash():
             sh:datatype xsd:string ;
             sh:nodeKind sh:Literal ;
             sh:path <http://example.org/test/vocab/lit_property> .
-            ?ropB a sh:PropertyShape ;
 
+        ?ropB a sh:PropertyShape ;
             sh:nodeKind sh:IRI ;
             sh:path <http://example.org/test/vocab/obj_property> .
     }
