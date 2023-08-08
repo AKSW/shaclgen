@@ -1,11 +1,10 @@
+from loguru import logger
 from rdflib import Graph, Namespace
 from rdflib.namespace import XSD, RDF, RDFS, OWL, SH
 from rdflib.namespace import NamespaceManager
 from rdflib.term import URIRef, Literal, BNode
 import collections
-import json
 from rdflib.collection import Collection
-import pkg_resources
 from .generator import Generator
 
 """
@@ -17,7 +16,7 @@ current assumptions:
 
 
 class schema(Generator):
-    def __init__(self, graph: Graph, prefixes=None):
+    def __init__(self, graph: Graph, namespaces=None):
         self.G = graph
 
         self.CLASSES = collections.OrderedDict()
@@ -39,20 +38,11 @@ class schema(Generator):
             XSD.nonPositiveInteger,
         ]
 
-        path = "prefixes/namespaces.json"
-        filepath = pkg_resources.resource_filename(__name__, path)
-
-        self.namespaces = NamespaceManager(graph=Graph())
+        if namespaces:
+            self.namespaces = namespaces
+        else:
+            self.namespaces = NamespaceManager(graph=Graph())
         self.namespaces.bind("sh", SH)
-
-        with open(filepath, "r", encoding="utf-8") as fin:
-            for prefix, namespace in json.load(fin).items():
-                self.namespaces.bind(prefix, namespace)
-
-        if prefixes:
-            with open(prefixes, "r", encoding="utf-8") as fin:
-                for prefix, namespace in json.load(fin).items():
-                    self.namespaces.bind(prefix, namespace)
 
     def extract_props(self):
         properties = []
@@ -207,9 +197,13 @@ class schema(Generator):
             self.REST[rest]["value"] = rest_val[0]
 
     def gen_graph(self, namespace=None, implicit_class_target=False):
+        logger.info("Start Extraction of the Ontology")
+        logger.info("Properties …")
         self.extract_props()
+        logger.info("Classes …")
         self.extract_classes()
         self.extract_restrictions()
+        logger.info("Write resulting SHACL Graph …")
         ng = Graph(namespace_manager=self.namespaces)
 
         if namespace is not None:

@@ -1,97 +1,127 @@
-from rdflib import Namespace, URIRef, BNode, Literal, Graph
+from loguru import logger
+from rdflib import Namespace, Literal, Graph
 import rdflib
-import json
 import collections
-from rdflib.namespace import XSD, RDF, SH
+from rdflib.namespace import RDF, RDFS, SH
 from rdflib.namespace import NamespaceManager
-import pkg_resources
 from .generator import Generator
+
+SHGEN = Namespace("http://shaclgen/")
 
 
 class data_graph(Generator):
-    def __init__(self, graph: Graph, prefixes=None):
+    def __init__(self, graph: Graph, namespaces=None):
         self.G = graph
 
         self.CLASSES = collections.OrderedDict()
         self.PROPS = collections.OrderedDict()
         self.OUT = []
 
-        path = "prefixes/namespaces.json"
-        filepath = pkg_resources.resource_filename(__name__, path)
-
-        self.namespaces = NamespaceManager(graph=Graph())
+        if namespaces:
+            self.namespaces = namespaces
+        else:
+            self.namespaces = NamespaceManager(graph=Graph())
         self.namespaces.bind("sh", SH)
-
-        with open(filepath, "r", encoding="utf-8") as fin:
-            for prefix, namespace in json.load(fin).items():
-                self.namespaces.bind(prefix, namespace)
-
-        if prefixes:
-            with open(prefixes, "r", encoding="utf-8") as fin:
-                for prefix, namespace in json.load(fin).items():
-                    self.namespaces.bind(prefix, namespace)
+        self.namespaces.bind("shgen", SHGEN)
 
     def extract_classes(self):
         types_query = "select distinct ?class_ { ?s rdf:type ?class_ }"
         for row in self.G.query(types_query, initNs={"rdf": RDF}):
+            logger.debug(f"Class: {row.class_}")
             self.CLASSES[row.class_] = {"label": self.sh_label_gen(row.class_)}
 
     def extract_props(self):
         prop_query = "select distinct ?prop { ?s ?prop ?o . filter(?prop != rdf:type)}"
-        prop_subj_classes = "select distinct ?class_ {{ ?sub {prop} ?o ; a ?class_ . }}"
-        for property_row in self.G.query(prop_query, initNs={"rdf": RDF}):
+        for property_row in self.G.query(prop_query, initNs={"rdf": RDF, "rdfs": RDFS}):
             prop = property_row.prop
+            logger.debug(f"Property: {prop}")
             self.PROPS[prop] = {
                 "nodekind": None,
                 "cardinality": None,
                 "classes": [],
+                "exceptions": [],
                 "label": self.sh_label_gen(prop),
             }
-            for class_row in self.G.query(prop_subj_classes.format(prop=prop.n3())):
-                class_ = class_row.class_
-                self.PROPS[prop]["classes"].append(self.CLASSES[class_]["label"])
+
+            self.extract_props_subj_types(prop)
 
             if len(self.PROPS[prop]["classes"]) == 1:
                 self.PROPS[prop]["type"] = "unique"
             else:
                 self.PROPS[prop]["type"] = "repeat"
 
-    def extract_constraints(self):
+            self.extract_props_obj_types(prop)
 
-        for prop in self.PROPS.keys():
-            types = []
-            classes = []
+    def extract_props_subj_types(self, prop):
+        logger.debug(f"Property subject types: {prop}")
+        prop_subject_type = "select distinct ?class_ {{ ?sub {prop} ?o ; a ?class_ . }}"
+
+        try:
+            class_property_result = self.G.query(
+                prop_subject_type.format(prop=prop.n3())
+            )
+            for class_row in class_property_result:
+                class_ = class_row.class_
+                self.PROPS[prop]["classes"].append(self.CLASSES[class_]["label"])
+        except Exception as e:
+            logger.error(e)
+            self.PROPS[prop]["exceptions"].append(
+                {"exception": e, "query": prop_subject_type.format(prop=prop.n3())}
+            )
+
+    def extract_props_obj_types(self, prop):
+        logger.debug(f"Property object types: {prop}")
+        prop_object_type = """
+            select distinct ?literal ?dt ?blank ?iri ?class_ {{
+                ?s {prop} ?obj .
+                optional {{ ?obj a ?class_ }}
+                bind(isLiteral(?obj) as ?literal)
+                bind(datatype(?obj) as ?dt)
+                bind(isBlank(?obj) as ?blank)
+                bind(isIRI(?obj) as ?iri)
+            }}"""
+
+        try:
+            nodekinds = []
             datatypes = []
-            for s, p, o in self.G.triples((None, prop, None)):
-                nodeType = type(o)
-                if not types:
-                    types.append(nodeType)
-                elif nodeType not in types:
-                    # currently only one type is handled per property
-                    break
-                if nodeType == URIRef:
-                    for _, _, objectClass in self.G.triples((o, RDF.type, None)):
-                        classes.append(objectClass)
-                elif nodeType == Literal:
-                    datatypes.append(
-                        o.datatype or XSD.langString if o.language else XSD.string
-                    )
+            objectclasses = []
 
-            if len(set(types)) == 1:
-                if types[0] == URIRef:
-                    self.PROPS[prop]["nodekind"] = "IRI"
-                    self.PROPS[prop]["objectclasses"] = classes
-                elif types[0] == BNode:
-                    self.PROPS[prop]["nodekind"] = "BNode"
-                elif types[0] == Literal:
-                    self.PROPS[prop]["nodekind"] = "Literal"
+            property_object_result = self.G.query(
+                prop_object_type.format(prop=prop.n3())
+            )
+            for object_type_row in property_object_result:
+                if object_type_row.literal:
+                    nodekinds.append("Literal")
+                    datatypes.append(object_type_row.dt)
+                elif object_type_row.blank:
+                    nodekinds.append("BNode")
+                elif object_type_row.iri:
+                    nodekinds.append("IRI")
+
+                if object_type_row.blank or object_type_row.iri:
+                    if object_type_row.class_:
+                        objectclasses.append(object_type_row.class_)
+
+            if len(set(nodekinds)) == 1:
+                self.PROPS[prop]["nodekind"] = nodekinds[0]
+                if nodekinds[0] == "Literal":
                     if len(set(datatypes)) == 1:
                         self.PROPS[prop]["datatype"] = datatypes[0]
+                elif nodekinds[0] in ("IRI", "BNode"):
+                    self.PROPS[prop]["objectclasses"] = objectclasses
+        except Exception as e:
+            logger.error(e)
+            self.PROPS[prop]["exceptions"].append(
+                {"exception": e, "query": prop_object_type.format(prop=prop.n3())}
+            )
 
     def gen_graph(self, namespace=None, implicit_class_target=False):
+        logger.info("Start Extraction of the Data Graph")
+        logger.info("Classes …")
         self.extract_classes()
+        logger.info("Properties …")
         self.extract_props()
-        self.extract_constraints()
+        logger.info("Write resulting SHACL Graph …")
         ng = rdflib.Graph(namespace_manager=self.namespaces)
 
         if namespace is not None:
@@ -119,6 +149,22 @@ class data_graph(Generator):
 
             ng.add((EX[self.PROPS[p]["label"]], RDF.type, SH.PropertyShape))
             ng.add((EX[self.PROPS[p]["label"]], SH.path, p))
+
+            for exception in self.PROPS[p]["exceptions"]:
+                ng.add(
+                    (
+                        EX[self.PROPS[p]["label"]],
+                        SHGEN.exception,
+                        Literal(str(exception["exception"])),
+                    )
+                )
+                ng.add(
+                    (
+                        EX[self.PROPS[p]["label"]],
+                        SHGEN.query,
+                        Literal(str(exception["query"])),
+                    )
+                )
 
             for class_prop in self.PROPS[p]["classes"]:
                 ng.add((EX[class_prop], SH.property, EX[self.PROPS[p]["label"]]))

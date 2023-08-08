@@ -3,9 +3,13 @@ from .shaclgen import data_graph
 from .schema import schema
 
 import click
-from sys import stdout
+from sys import stdout, stderr
 from rdflib import Graph
 from rdflib.util import guess_format
+from rdflib.namespace import NamespaceManager
+from loguru import logger
+import json
+import pkg_resources
 
 
 @click.command()
@@ -51,7 +55,33 @@ from rdflib.util import guess_format
     help="use implicit class targets with RDFS",
     default=False,
 )
-def main(graphs, ontology, output, serial, prefixes, namespace, implicit_class_target):
+@click.option(
+    "--logfile",
+    help="Specify a logfile",
+    default=None,
+)
+@click.option(
+    "--loglevel",
+    help="Specify the standard output loglevel",
+    default="INFO",
+)
+@click.option(
+    "--logfilelevel",
+    help="Specify the loglevel for the logfile",
+    default="DEBUG",
+)
+def main(
+    graphs,
+    ontology,
+    output,
+    serial,
+    prefixes,
+    namespace,
+    implicit_class_target,
+    logfile,
+    loglevel,
+    logfilelevel,
+):
     """
     ---------------------------Shaclgen---------------------------
 
@@ -89,16 +119,35 @@ def main(graphs, ontology, output, serial, prefixes, namespace, implicit_class_t
 
     """
 
+    logger.remove()
+    logger.add(stderr, level=loglevel)
+    if logfile:
+        logger.add(logfile, level=logfilelevel)
+
     source_graph = Graph()
 
     for graph in graphs:
         source_graph.parse(graph, format=guess_format(graph))
 
+    path = "prefixes/namespaces.json"
+    filepath = pkg_resources.resource_filename(__name__, path)
+
+    namespaces = NamespaceManager(graph=Graph())
+
+    with open(filepath, "r", encoding="utf-8") as fin:
+        for prefix, namespace_iri in json.load(fin).items():
+            namespaces.bind(prefix, namespace_iri)
+
+    if prefixes:
+        with open(prefixes, "r", encoding="utf-8") as fin:
+            for prefix, namespace_iri in json.load(fin).items():
+                namespaces.bind(prefix, namespace_iri)
+
     g = None
     if ontology:
-        g = schema(source_graph, prefixes)
+        g = schema(source_graph, namespaces)
     else:
-        g = data_graph(source_graph, prefixes)
+        g = data_graph(source_graph, namespaces)
     shape_graph = g.gen_graph(
         namespace=namespace, implicit_class_target=implicit_class_target
     )

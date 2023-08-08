@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 
 
 class Generator:
-    def __init__(self, graph: Graph, prefixes=None):
+    def __init__(self, graph: Graph, namespaces=None):
         pass
 
     def sh_label_gen(self, uri):
