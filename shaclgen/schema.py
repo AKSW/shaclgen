@@ -191,6 +191,15 @@ class schema(Generator):
                 rest_type.append(p)
                 rest_val.append(o)
             for s, p, o in self.G.triples((rest, OWL.minQualifiedCardinality, None)):
+                # TODO add onClass or onDataRange
+                rest_type.append(p)
+                rest_val.append(o)
+            for s, p, o in self.G.triples((rest, OWL.maxQualifiedCardinality, None)):
+                # TODO add onClass or onDataRange
+                rest_type.append(p)
+                rest_val.append(o)
+            for s, p, o in self.G.triples((rest, OWL.qualifiedCardinality, None)):
+                # TODO add onClass or onDataRange
                 rest_type.append(p)
                 rest_val.append(o)
             self.REST[rest]["type"] = rest_type[0]
