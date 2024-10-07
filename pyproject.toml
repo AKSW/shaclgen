@@ -20,7 +20,7 @@ click = "^8.1.2"
 loguru = "^0.6.0"
 
 [tool.poetry.dev-dependencies]
-black = "^22.3.0"
+black = "^24.3.0"
 pytest = "^7.4.0"
 pytest-cov = "^4.1.0"
 
