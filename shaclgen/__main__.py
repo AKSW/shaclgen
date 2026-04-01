@@ -9,7 +9,7 @@ from rdflib.util import guess_format
 from rdflib.namespace import NamespaceManager
 from loguru import logger
 import json
-import pkg_resources
+import importlib.resources
 
 
 @click.command()
@@ -130,13 +130,12 @@ def main(
         source_graph.parse(graph, format=guess_format(graph))
 
     path = "prefixes/namespaces.json"
-    filepath = pkg_resources.resource_filename(__name__, path)
+    with importlib.resources.path(self.__module__, path) as prefixes_path:
+        namespaces = NamespaceManager(graph=Graph())
 
-    namespaces = NamespaceManager(graph=Graph())
-
-    with open(filepath, "r", encoding="utf-8") as fin:
-        for prefix, namespace_iri in json.load(fin).items():
-            namespaces.bind(prefix, namespace_iri)
+        with open(prefixes_path, "r", encoding="utf-8") as fin:
+            for prefix, namespace_iri in json.load(fin).items():
+                namespaces.bind(prefix, namespace_iri)
 
     if prefixes:
         with open(prefixes, "r", encoding="utf-8") as fin:

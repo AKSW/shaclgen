@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "shaclgen"
-version = "3.0.0beta2"
+version = "3.0.0beta3"
 description = "Shacl graph generator: python program to generate template shacl graphs"
 authors = ["Alexis Keely <alexiskeelie@gmail.com>", "Natanael Arndt <natanael.arndt@eccenca.com>", "Miel Vander Sande <miel.vandersande@meemoo.be>"]
 homepage = "https://github.com/uwlib-cams/shaclgen"
@@ -18,7 +18,6 @@ python = "^3.9"
 rdflib = "^7.0.0"
 click = "^8.1.2"
 loguru = "^0.6.0"
-setuptools = "^82.0.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
