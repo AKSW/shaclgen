@@ -130,7 +130,7 @@ def main(
         source_graph.parse(graph, format=guess_format(graph))
 
     path = "prefixes/namespaces.json"
-    with importlib.resources.path(self.__module__, path) as prefixes_path:
+    with importlib.resources.path(__name__, path) as prefixes_path:
         namespaces = NamespaceManager(graph=Graph())
 
         with open(prefixes_path, "r", encoding="utf-8") as fin:
